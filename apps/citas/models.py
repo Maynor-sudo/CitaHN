@@ -5,7 +5,7 @@ from apps.hospitales.models import Hospital, Especialidad
 
 
 class Cita(models.Model):
-
+    
     class Estado(models.TextChoices):
         PENDIENTE = "PENDIENTE", "Pendiente"
         CONFIRMADA = "CONFIRMADA", "Confirmada"
@@ -56,10 +56,6 @@ class Cita(models.Model):
             f"{self.paciente} - "
             f"{self.fecha_hora:%d/%m/%Y %H:%M}"
         )
-    
-    numero_turno = models.PositiveIntegerField(
-        default=0
-    )
 
     class Meta:
         constraints = [
@@ -68,3 +64,28 @@ class Cita(models.Model):
                 name="cita_medico_fecha_unica"
             )
         ]
+
+class OfertaCita(models.Model):
+    cita_origen = models.ForeignKey(
+        Cita,
+        on_delete=models.CASCADE,
+        related_name="ofertas"
+    )
+
+    paciente = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="ofertas_cita"
+    )
+
+    aceptada = models.BooleanField(
+        null=True,
+        blank=True
+    )
+
+    fecha_oferta = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.cita_origen} → {self.paciente}"

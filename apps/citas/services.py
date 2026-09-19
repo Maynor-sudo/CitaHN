@@ -187,3 +187,115 @@ def crear_cita(paciente, especialidad, hospital, fecha_hora, motivo):
     )
 
     return cita
+
+from django.utils import timezone
+
+
+def cancelar_cita(cita):
+    ahora = timezone.now()
+    limite = cita.fecha_hora - timedelta(hours=12)
+
+    if ahora > limite:
+        return False
+
+    cita.estado = Cita.Estado.CANCELADA
+    cita.save(update_fields=["estado", "fecha_actualizacion"])
+
+    return True
+
+def buscar_candidatos_oferta(cita_liberada):
+    ahora = timezone.now()
+    limite_48_horas = ahora + timedelta(hours=48)
+
+    candidatos = Cita.objects.filter(
+        especialidad=cita_liberada.especialidad,
+        hospital=cita_liberada.hospital,
+        fecha_hora__gt=cita_liberada.fecha_hora,
+        fecha_hora__gte=limite_48_horas,
+        estado__in=[
+            Cita.Estado.PENDIENTE,
+            Cita.Estado.CONFIRMADA,
+        ],
+    ).exclude(
+        paciente__in=OfertaCita.objects.filter(
+            cita_origen=cita_liberada
+        ).values("paciente")
+    ).order_by(
+        "fecha_solicitud"
+    )[:2]
+
+    return candidatos
+
+def crear_oferta_siguiente(cita_liberada):
+    ofertas_realizadas = OfertaCita.objects.filter(
+        cita_origen=cita_liberada
+    ).count()
+
+    if ofertas_realizadas >= 2:
+        return None
+
+    candidato = buscar_candidatos_oferta(cita_liberada).first()
+
+    if not candidato:
+        return None
+
+    return OfertaCita.objects.create(
+        cita_origen=cita_liberada,
+        paciente=candidato.paciente,
+    )
+
+
+@transaction.atomic
+def aceptar_oferta(oferta):
+    if oferta.aceptada is not None:
+        return False
+
+    cita_nueva = oferta.cita_origen
+    cita_actual = Cita.objects.filter(
+        paciente=oferta.paciente,
+        especialidad=cita_nueva.especialidad,
+        hospital=cita_nueva.hospital,
+        fecha_hora__gt=cita_nueva.fecha_hora,
+        estado__in=[
+            Cita.Estado.PENDIENTE,
+            Cita.Estado.CONFIRMADA,
+        ],
+    ).order_by("fecha_solicitud").first()
+
+    if not cita_actual:
+        oferta.aceptada = False
+        oferta.save(update_fields=["aceptada"])
+        return False
+
+    medico = asignar_medico(
+        cita_nueva.especialidad,
+        cita_nueva.hospital,
+        cita_nueva.fecha_hora,
+    )
+
+    if medico is None:
+        return False
+
+    cita_actual.fecha_hora = cita_nueva.fecha_hora
+    cita_actual.medico = medico
+    cita_actual.estado = Cita.Estado.CONFIRMADA
+    cita_actual.save(
+        update_fields=["fecha_hora", "medico", "estado", "fecha_actualizacion"]
+    )
+
+    oferta.aceptada = True
+    oferta.save(update_fields=["aceptada"])
+
+    return True
+
+
+def rechazar_oferta(oferta):
+    if oferta.aceptada is not None:
+        return False
+
+    oferta.aceptada = False
+    oferta.save(update_fields=["aceptada"])
+
+    crear_oferta_siguiente(oferta.cita_origen)
+
+    return True
