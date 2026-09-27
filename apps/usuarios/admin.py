@@ -16,7 +16,10 @@ class UsuarioAdmin(UserAdmin):
         "fecha_registro",
     )
 
-    list_filter = ("rol", "activo")
+    list_filter = (
+        "rol",
+        "activo",
+    )
 
     ordering = ("identidad",)
 
@@ -25,4 +28,50 @@ class UsuarioAdmin(UserAdmin):
         "nombre",
         "apellido",
         "email",
+    )
+
+    fieldsets = (
+        ("Información personal", {
+            "fields": (
+                "identidad",
+                "nombre",
+                "apellido",
+                "email",
+                "telefono",
+                "fecha_nacimiento",
+            )
+        }),
+        ("Rol y estado", {
+            "fields": (
+                "rol",
+                "activo",
+                "is_staff",
+                "is_superuser",
+                "groups",
+                "user_permissions",
+            )
+        }),
+        ("Seguridad", {
+            "fields": (
+                "password",
+            )
+        }),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": (
+                "identidad",
+                "nombre",
+                "apellido",
+                "email",
+                "telefono",
+                "fecha_nacimiento",
+                "rol",
+                "password1",
+                "password2",
+                "activo",
+            ),
+        }),
     )

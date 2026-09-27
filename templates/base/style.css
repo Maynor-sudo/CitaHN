@@ -1,0 +1,39 @@
+body {
+    min-height: 100vh;
+    background-color: #f7fafc;
+    color: #172b4d;
+}
+
+.navbar {
+    background-color: #0b2d4d !important;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #08a6a6;
+    border-color: #08a6a6;
+}
+
+.btn-primary:hover {
+    background-color: #078f8f;
+    border-color: #078f8f;
+}
+
+.text-primary {
+    color: #08a6a6 !important;
+}
+
+.hero {
+    background: linear-gradient(135deg, #eefafa, #ffffff);
+}
+
+.card {
+    border: none;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}

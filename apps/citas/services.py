@@ -5,7 +5,7 @@ from django.utils import timezone
 from apps.citas.models import Cita
 from apps.medicos.models import BloqueoHorario
 
-
+ 
 DURACION_CITA = timedelta(minutes=20)
 
 
@@ -155,12 +155,44 @@ def buscar_siguiente_slot(especialidad, hospital, fecha_inicio, dias_maximos=30)
                 )
 
                 for slot in slots:
-                    if slot >= fecha_inicio:
+                    if slot >= timezone.make_aware(
+                        datetime.combine(
+                            fecha_inicio,
+                            datetime.min.time()
+                        )
+                    ):
                         return slot
 
         fecha += timedelta(days=1)
-
     return None
+
+def obtener_horarios_disponibles(especialidad, hospital, fecha):
+    horarios = []
+
+    medicos = especialidad.medicos.filter(
+        hospital=hospital,
+        activo=True,
+        usuario__activo=True,
+    )
+
+    for medico in medicos:
+        disponibilidades = medico.disponibilidades.filter(
+            dia_semana=fecha.weekday(),
+            activo=True,
+        )
+
+        for disponibilidad in disponibilidades:
+            slots = obtener_slots_disponibles(
+                medico,
+                disponibilidad,
+                fecha,
+            )
+
+            for slot in slots:
+                if slot not in horarios:
+                    horarios.append(slot)
+
+    return sorted(horarios)
 
 from django.db import transaction
 

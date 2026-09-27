@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+
+{% block title %}Horarios | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <p class="text-primary fw-semibold mb-1">
+            {{ hospital.nombre }}
+        </p>
+
+        <h1 class="fw-bold mb-2">
+            {{ especialidad.nombre }}
+        </h1>
+
+        <p class="text-secondary mb-4">
+            Selecciona una fecha y luego el horario que prefieras.
+        </p>
+
+        <form method="get" class="row g-3 mb-5">
+
+            <div class="col-md-6">
+                <label for="fecha" class="form-label fw-semibold">
+                    Fecha
+                </label>
+
+                <input type="date" id="fecha" name="fecha" class="form-control form-control-lg"
+                    value="{{ fecha|date:'Y-m-d' }}" min="{{ fecha|date:'Y-m-d' }}">
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Buscar horarios
+                </button>
+            </div>
+
+        </form>
+
+        {% if horarios %}
+
+        <h4 class="fw-bold mb-3">
+            Horarios disponibles
+        </h4>
+
+        <div class="row g-3">
+
+            {% for horario in horarios %}
+
+            <div class="col-6 col-md-4 col-lg-3">
+
+                <a href="{% url 'confirmar_cita' hospital.id especialidad.id %}?fecha={{ fecha|date:'Y-m-d' }}&hora={{ horario|date:'H:i' }}"
+                    class="btn btn-outline-primary btn-lg w-100 py-3">
+                    {{ horario|date:"H:i" }}
+                </a>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-info rounded-4">
+            No hay horarios disponibles para esta fecha.
+        </div>
+
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}

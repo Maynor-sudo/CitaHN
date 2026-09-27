@@ -1,0 +1,63 @@
+/*    FORMULARIO DE REGISTRO */
+
+.registro-form .form-label {
+    color: #172b4d;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.registro-form .form-control {
+    min-height: 50px;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.registro-form .form-control:focus {
+    border-color: #08a6a6;
+    box-shadow: 0 0 0 0.2rem rgba(8, 166, 166, 0.15);
+}
+
+.registro-form .form-control::placeholder {
+    color: #9aa8b5;
+}
+
+.registro-form input[type="date"] {
+    cursor: pointer;
+}
+
+.registro-form .btn-primary {
+    min-height: 52px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* FORMULARIO DE INICIO DE SESIÓN */
+
+.login-form .form-control {
+    min-height: 50px;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form .form-control:focus {
+    border-color: #08a6a6;
+    box-shadow: 0 0 0 0.2rem rgba(8, 166, 166, 0.15);
+}
+
+.login-form .form-control::placeholder {
+    color: #9aa8b5;
+}
+
+.login-form .btn-primary {
+    min-height: 52px;
+    border-radius: 12px;
+    font-weight: 600;
+}

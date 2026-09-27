@@ -1,0 +1,69 @@
+{% extends "base/base.html" %}
+
+{% block title %}Especialidades | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <p class="text-primary fw-semibold mb-1">
+            {{ hospital.nombre }}
+        </p>
+
+        <h1 class="fw-bold mb-2">
+            ¿Qué atención necesitas?
+        </h1>
+
+        <p class="text-secondary mb-4">
+            Selecciona una especialidad médica.
+        </p>
+
+        <div class="row g-4">
+
+            {% for especialidad in especialidades %}
+
+                <div class="col-12 col-md-6 col-lg-4">
+
+                    <a
+                        href="#"
+                        class="text-decoration-none"
+                    >
+
+                    <a
+                        href="{% url 'seleccionar_horario' hospital.id especialidad.id %}"
+                         class="text-decoration-none"
+                    >
+                        <div class="card shadow-sm rounded-4 p-4 h-100">
+
+                            <h4 class="fw-bold text-dark">
+                                {{ especialidad.nombre }}
+                            </h4>
+
+                            {% if especialidad.descripcion %}
+                                <p class="text-secondary mb-0">
+                                    {{ especialidad.descripcion }}
+                                </p>
+                            {% endif %}
+
+                        </div>
+                    </a>
+
+                </div>
+
+            {% empty %}
+
+                <div class="col-12">
+                    <div class="alert alert-info rounded-4">
+                        No hay especialidades disponibles en este hospital.
+                    </div>
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

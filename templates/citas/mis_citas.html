@@ -1,0 +1,126 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mis citas | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="mb-5">
+            <span class="text-primary fw-semibold">
+                CitaHN
+            </span>
+
+            <h1 class="fw-bold mt-2">
+                Mis citas
+            </h1>
+
+            <p class="text-secondary">
+                Consulta tus citas médicas programadas.
+            </p>
+        </div>
+
+        {% if citas %}
+
+        <div class="row g-4">
+
+            {% for cita in citas %}
+
+            <div class="col-12 col-lg-6">
+
+                <div class="card shadow-sm rounded-4 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                {{ cita.especialidad.nombre }}
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                {{ cita.hospital.nombre }}
+                            </p>
+                        </div>
+
+                        {% if cita.estado == "CONFIRMADA" %}
+                        <span class="badge text-bg-success">
+                            Confirmada
+                        </span>
+                        {% elif cita.estado == "PENDIENTE" %}
+                        <span class="badge text-bg-warning">
+                            Pendiente
+                        </span>
+                        {% elif cita.estado == "ATENDIDA" %}
+                        <span class="badge text-bg-primary">
+                            Atendida
+                        </span>
+                        {% elif cita.estado == "CANCELADA" %}
+                        <span class="badge text-bg-secondary">
+                            Cancelada
+                        </span>
+                        {% elif cita.estado == "NO_ASISTIO" %}
+                        <span class="badge text-bg-danger">
+                            No asistió
+                        </span>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Fecha:</strong>
+                        {{ cita.fecha_hora|date:"d/m/Y" }}
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Hora:</strong>
+                        {{ cita.fecha_hora|date:"H:i" }}
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Médico:</strong>
+                        {{ cita.medico }}
+                    </div>
+
+                    <div>
+                        <strong>Motivo:</strong>
+                        <p class="text-secondary mb-0 mt-1">
+                            {{ cita.motivo }}
+                        </p>
+                        {% if cita.estado == "CONFIRMADA" or cita.estado == "PENDIENTE" %}
+
+                        <div class="mt-4 pt-3 border-top">
+
+                            <form method="post" action="{% url 'cancelar_cita' cita.id %}">
+                                {% csrf_token %}
+
+                                <button type="submit" class="btn btn-outline-danger">
+                                    Cancelar cita
+                                </button>
+                            </form>
+
+                        </div>
+
+                        {% endif %}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="alert alert-info rounded-4">
+            No tienes citas registradas actualmente.
+        </div>
+
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}

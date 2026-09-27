@@ -1,0 +1,105 @@
+{% extends "base/base.html" %}
+
+{% block title %}Confirmar cita | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="mb-4">
+            <span class="text-primary fw-semibold">
+                Paso 4 de 4
+            </span>
+
+            <h1 class="fw-bold mt-2">
+                Confirma tu cita
+            </h1>
+
+            <p class="text-secondary">
+                Revisa los datos antes de continuar.
+            </p>
+        </div>
+
+        <div class="card shadow-sm rounded-4 p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-bold">Hospital</h5>
+                <p class="text-secondary mb-0">
+                    {{ hospital.nombre }}
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <h5 class="fw-bold">Especialidad</h5>
+                <p class="text-secondary mb-0">
+                    {{ especialidad.nombre }}
+                </p>
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-4">
+                    <h5 class="fw-bold">Fecha</h5>
+                    <p class="text-secondary mb-0">
+                        {{ fecha|date:"d/m/Y" }}
+                    </p>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <h5 class="fw-bold">Hora</h5>
+                    <p class="text-secondary mb-0">
+                        {{ hora }}
+                    </p>
+                </div>
+
+            </div>
+
+            <form method="post" action="{% url 'crear_cita' hospital.id especialidad.id %}">
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="fecha"
+                    value="{{ fecha|date:'Y-m-d' }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="hora"
+                    value="{{ hora }}"
+                >
+
+                <div class="mb-4">
+                    <label
+                        for="motivo"
+                        class="form-label fw-semibold"
+                    >
+                        Motivo de la consulta
+                    </label>
+
+                    <textarea
+                        id="motivo"
+                        name="motivo"
+                        class="form-control"
+                        rows="4"
+                        maxlength="500"
+                        required
+                    ></textarea>
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-lg"
+                >
+                    Confirmar cita
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+
+{% block title %}Cita confirmada | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="card shadow-sm rounded-4 p-5 text-center">
+
+            <div class="display-4 text-success mb-3">
+                ✓
+            </div>
+
+            <h1 class="fw-bold">
+                ¡Cita confirmada!
+            </h1>
+
+            <p class="text-secondary mt-3">
+                Tu cita ha sido registrada correctamente.
+            </p>
+
+            <div class="mt-4">
+
+                <p class="mb-2">
+                    <strong>Hospital:</strong>
+                    {{ cita.hospital.nombre }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Especialidad:</strong>
+                    {{ cita.especialidad.nombre }}
+                </p>
+
+                <p class="mb-2">
+                    <strong>Médico:</strong>
+                    {{ cita.medico }}
+                </p>
+
+                <p class="mb-4">
+                    <strong>Fecha y hora:</strong>
+                    {{ cita.fecha_hora|date:"d/m/Y H:i" }}
+                </p>
+
+            </div>
+
+            <a
+                href="{% url 'inicio' %}"
+                class="btn btn-primary"
+            >
+                Volver al inicio
+            </a>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

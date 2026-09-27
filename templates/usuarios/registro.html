@@ -1,0 +1,125 @@
+{% extends "base/base.html" %}
+
+{% block title %}Crear cuenta | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="row justify-content-center">
+
+            <div class="col-12 col-md-8 col-lg-6">
+
+                <div class="card shadow-sm rounded-4 p-4">
+
+                    <h1 class="fw-bold mb-2">
+                        Crear cuenta
+                    </h1>
+
+                    <p class="text-secondary mb-4">
+                        Regístrate para poder solicitar y gestionar tus citas.
+                    </p>
+
+                    <form method="post" class="registro-form">
+
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                Revisa los datos ingresados.
+                            </div>
+                        {% endif %}
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Número de identidad
+                                </label>
+                                {{ form.identidad }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Fecha de nacimiento
+                                </label>
+                                {{ form.fecha_nacimiento }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Nombre
+                                </label>
+                                {{ form.nombre }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Apellido
+                                </label>
+                                {{ form.apellido }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Correo electrónico
+                                </label>
+                                {{ form.email }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Teléfono
+                                </label>
+                                {{ form.telefono }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Contraseña
+                                </label>
+                                {{ form.password1 }}
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-semibold">
+                                    Confirmar contraseña
+                                </label>
+                                {{ form.password2 }}
+                            </div>
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-lg w-100"
+                        >
+                            Crear cuenta
+                        </button>
+
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <span class="text-secondary">
+                            ¿Ya tienes una cuenta?
+                        </span>
+
+                        <a
+                            href="{% url 'login' %}"
+                            class="text-primary fw-semibold text-decoration-none"
+                        >
+                            Iniciar sesión
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

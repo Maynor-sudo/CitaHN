@@ -1,0 +1,118 @@
+{% extends "base/base.html" %}
+
+{% block title %}Iniciar sesión | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <div class="row justify-content-center">
+
+            <div class="col-12 col-md-6 col-lg-5">
+
+                <div class="card shadow-sm rounded-4 p-4">
+
+                    <div class="text-center mb-4">
+                        <h1 class="fw-bold">
+                            Iniciar sesión
+                        </h1>
+
+                        <p class="text-secondary mb-0">
+                            Ingresa a tu cuenta de CitaHN.
+                        </p>
+                    </div>
+
+                    <form method="post" class="login-form">
+
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger rounded-3">
+                                El número de identidad o la contraseña
+                                son incorrectos.
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+
+                            <label
+                                for="id_username"
+                                class="form-label fw-semibold"
+                            >
+                                Número de identidad
+                            </label>
+
+                            <input
+                                type="text"
+                                name="username"
+                                id="id_username"
+                                class="form-control"
+                                placeholder="Ingresa tu número de identidad"
+                                autocomplete="username"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label
+                                for="id_password"
+                                class="form-label fw-semibold"
+                            >
+                                Contraseña
+                            </label>
+
+                            <input
+                                type="password"
+                                name="password"
+                                id="id_password"
+                                class="form-control"
+                                placeholder="Ingresa tu contraseña"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                        </div>
+
+                        <input
+                            type="hidden"
+                            name="next"
+                            value="{{ next }}"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-lg w-100"
+                        >
+                            Iniciar sesión
+                        </button>
+
+                    </form>
+
+                    <div class="text-center mt-4">
+
+                        <span class="text-secondary">
+                            ¿No tienes una cuenta?
+                        </span>
+
+                        <a
+                            href="{% url 'registro' %}"
+                            class="text-primary fw-semibold text-decoration-none"
+                        >
+                            Crear cuenta
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

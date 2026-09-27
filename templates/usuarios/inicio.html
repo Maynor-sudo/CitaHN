@@ -1,0 +1,88 @@
+{% extends "base/base.html" %}
+
+{% block title %}Inicio | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="hero py-5">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+
+            <div class="col-lg-7">
+
+                <span class="badge text-bg-light text-primary mb-3 px-3 py-2">
+                    Sistema de citas médicas
+                </span>
+
+                <h1 class="display-4 fw-bold">
+                    Agenda tu cita médica
+                    <span class="text-primary">sin hacer filas.</span>
+                </h1>
+
+                <p class="lead text-secondary mt-4">
+                    CitaHN facilita el acceso a citas médicas en
+                    hospitales públicos de Honduras.
+                </p>
+
+                <div class="mt-4">
+
+                    <a href="{% url 'seleccionar_departamento' %}" class="btn btn-primary btn-lg px-4">
+                        Solicitar una cita
+                    </a>
+
+                    {% if not user.is_authenticated %}
+
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4 ms-2">
+                        Iniciar sesión
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-5 mt-5 mt-lg-0">
+
+                <div class="card shadow-sm rounded-4 p-4">
+
+                    <h3 class="fw-bold mb-4">
+                        ¿Cómo funciona?
+                    </h3>
+
+                    <div class="d-flex mb-3">
+                        <div>
+                            <strong>1. Selecciona tu ubicación</strong>
+                            <p class="text-secondary mb-0">
+                                Elige tu departamento y hospital.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mb-3">
+                        <div>
+                            <strong>2. Elige una especialidad</strong>
+                            <p class="text-secondary mb-0">
+                                Encuentra la atención médica que necesitas.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex">
+                        <div>
+                            <strong>3. Selecciona tu horario</strong>
+                            <p class="text-secondary mb-0">
+                                CitaHN asignará un médico disponible.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base/base.html" %}
+
+{% block title %}Hospitales | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <p class="text-primary fw-semibold mb-1">
+            {{ departamento.nombre }}
+        </p>
+
+        <h1 class="fw-bold mb-2">
+            Selecciona un hospital
+        </h1>
+
+        <p class="text-secondary mb-4">
+            Elige el hospital donde deseas solicitar tu cita.
+        </p>
+
+        <div class="row g-4">
+
+            {% for hospital in hospitales %}
+
+                <div class="col-12 col-md-6">
+
+                    <div class="card shadow-sm rounded-4 overflow-hidden h-100">
+
+                        {% if hospital.imagen %}
+                            <img
+                                src="{{ hospital.imagen.url }}"
+                                class="card-img-top"
+                                alt="{{ hospital.nombre }}"
+                                style="height: 220px; object-fit: cover;"
+                            >
+                        {% endif %}
+
+                        <div class="card-body p-4">
+
+                            <h4 class="fw-bold">
+                                {{ hospital.nombre }}
+                            </h4>
+
+                            <p class="text-secondary">
+                                {{ hospital.direccion }}
+                            </p>
+
+                            <a
+                                 href="{% url 'seleccionar_especialidad' hospital.id %}"
+                                  class="btn btn-primary"
+                            >
+                                Ver especialidades
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="alert alert-info">
+                    No hay hospitales disponibles en este departamento.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

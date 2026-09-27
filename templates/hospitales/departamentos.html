@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+
+{% block title %}Seleccionar departamento | CitaHN{% endblock %}
+
+{% block content %}
+
+<section class="py-5">
+    <div class="container">
+
+        <h1 class="fw-bold mb-2">¿Dónde necesitas atención?</h1>
+
+        <p class="text-secondary mb-4">
+            Selecciona el departamento donde deseas buscar un hospital.
+        </p>
+
+        <div class="row g-3">
+
+            {% for departamento in departamentos %}
+
+                <div class="col-12 col-md-6 col-lg-4">
+                        <a
+                             href="{% url 'seleccionar_hospital' departamento.id %}"
+                            class="text-decoration-none">
+                        <div class="card shadow-sm rounded-4 p-4 h-100">
+                            <h5 class="fw-bold text-dark mb-1">
+                                {{ departamento.nombre }}
+                            </h5>
+
+                            <span class="text-secondary">
+                                Ver hospitales →
+                            </span>
+                        </div>
+                    </a>
+                </div>
+
+            {% empty %}
+
+                <div class="alert alert-info">
+                    No hay departamentos disponibles actualmente.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

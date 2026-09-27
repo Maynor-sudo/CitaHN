@@ -1,22 +1,83 @@
-"""
-URL configuration for citahn project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
+from apps.usuarios.views import inicio
+from apps.hospitales.views import seleccionar_departamento, seleccionar_hospital, seleccionar_especialidad
+from apps.citas.views import seleccionar_horario, confirmar_cita, crear_cita_view, mis_citas, cancelar_cita_view
+from apps.usuarios.views import (inicio, UsuarioLoginView, registro,)
+from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-]
+    path("admin/", admin.site.urls),
+
+    path(
+        "",
+        inicio,
+        name="inicio"
+    ),
+    
+    path(
+    "citas/<int:cita_id>/cancelar/",
+    cancelar_cita_view,
+    name="cancelar_cita"
+    ),
+    
+    path(
+    "citas/mis-citas/",
+    mis_citas,
+    name="mis_citas"
+    ),
+    
+    path(
+    "accounts/logout/",
+    LogoutView.as_view(),
+    name="logout"
+    ),
+
+    path(
+    "accounts/registro/",
+    registro,
+    name="registro" 
+    ),
+
+    path(
+        "citas/departamentos/",
+        seleccionar_departamento,
+        name="seleccionar_departamento"
+    ),
+
+    path(
+        "citas/departamentos/<int:departamento_id>/hospitales/",
+        seleccionar_hospital,
+        name="seleccionar_hospital"
+    ),
+
+    path(
+        "citas/hospitales/<int:hospital_id>/especialidades/",
+        seleccionar_especialidad,
+        name="seleccionar_especialidad"
+    ),
+
+    path(
+        "citas/hospitales/<int:hospital_id>/especialidades/<int:especialidad_id>/horarios/",
+        seleccionar_horario,
+        name="seleccionar_horario"
+    ),
+
+    path(
+        "citas/hospitales/<int:hospital_id>/especialidades/<int:especialidad_id>/confirmar/",
+        confirmar_cita,
+        name="confirmar_cita"
+    ),
+    
+    path(
+    "citas/hospitales/<int:hospital_id>/especialidades/<int:especialidad_id>/crear/",
+    crear_cita_view,
+    name="crear_cita"
+    ),
+
+    path(
+    "accounts/login/",
+    UsuarioLoginView.as_view(),
+    name="login"
+    ),
+]  
