@@ -32,7 +32,7 @@ class CitaAdmin(admin.ModelAdmin):
 @admin.register(OfertaCita)
 class OfertaCitaAdmin(admin.ModelAdmin):
     list_display = (
-        "cita_origen",
+        "horario_liberado",
         "paciente",
         "aceptada",
         "fecha_oferta",

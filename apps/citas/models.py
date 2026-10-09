@@ -65,12 +65,51 @@ class Cita(models.Model):
             )
         ]
 
-class OfertaCita(models.Model):
-    cita_origen = models.ForeignKey(
-        Cita,
-        on_delete=models.CASCADE,
-        related_name="ofertas"
+class HorarioLiberado(models.Model):
+
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.PROTECT,
+        related_name="horarios_liberados"
     )
+
+    especialidad = models.ForeignKey(
+        Especialidad,
+        on_delete=models.PROTECT,
+        related_name="horarios_liberados"
+    )
+
+    medico = models.ForeignKey(
+        Medico,
+        on_delete=models.PROTECT,
+        related_name="horarios_liberados"
+    )
+
+    fecha_hora = models.DateTimeField()
+
+    disponible = models.BooleanField(default=True)
+
+    fecha_liberacion = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return (
+            f"{self.hospital} - "
+            f"{self.especialidad} - "
+            f"{self.fecha_hora:%d/%m/%Y %H:%M}"
+        )
+
+
+class OfertaCita(models.Model):
+
+    horario_liberado = models.ForeignKey(
+    HorarioLiberado,
+    on_delete=models.CASCADE,
+    related_name="ofertas",
+    null=True,
+    blank=True
+)
 
     paciente = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -88,4 +127,7 @@ class OfertaCita(models.Model):
     )
 
     def __str__(self):
-        return f"{self.cita_origen} → {self.paciente}"
+        return (
+            f"{self.horario_liberado} → "
+            f"{self.paciente}"
+        )

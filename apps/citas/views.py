@@ -1,29 +1,111 @@
-from datetime import date, datetime
-from apps.hospitales.models import Hospital, Especialidad
-from apps.citas.services import buscar_siguiente_slot
-from django.shortcuts import render, get_object_or_404, redirect
-from apps.citas.services import obtener_horarios_disponibles
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-from django.contrib import messages
-from apps.citas.services import crear_cita
-from django.utils import timezone
-from apps.citas.models import Cita
 
-@login_required
-def confirmar_cita(request, hospital_id, especialidad_id):
-    print("ENTRÓ A CONFIRMAR CITA")
+from datetime import date, datetime
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+
+from apps.hospitales.models import Hospital
+from apps.medicos.models import Medico
+from apps.citas.models import Cita
+from apps.citas.services import (
+    obtener_horarios_disponibles,
+    crear_cita,
+    cancelar_cita,
+)
+
+
+def especialidad_con_medicos(hospital, especialidad):
+    return Medico.objects.filter(
+        hospital=hospital,
+        especialidad=especialidad,
+        activo=True,
+        usuario__activo=True,
+    ).exists()
+
+
+def obtener_especialidad(hospital, especialidad_id):
+    return get_object_or_404(
+        hospital.especialidades.filter(activo=True),
+        id=especialidad_id,
+    )
+
+
+def seleccionar_horario(request, hospital_id, especialidad_id):
     hospital = get_object_or_404(
         Hospital,
         id=hospital_id,
-        activo=True
+        activo=True,
+    )
+    especialidad = obtener_especialidad(hospital, especialidad_id)
+
+    if not especialidad_con_medicos(hospital, especialidad):
+        messages.warning(
+            request,
+            "Esta especialidad estará disponible próximamente.",
+        )
+        return render(
+            request,
+            "citas/horarios.html",
+            {
+                "hospital": hospital,
+                "especialidad": especialidad,
+                "fecha": timezone.localdate(),
+                "horarios": [],
+                "sin_medicos": True,
+            },
+        )
+
+    fecha = request.GET.get("fecha")
+
+    try:
+        fecha_seleccionada = (
+            date.fromisoformat(fecha)
+            if fecha
+            else timezone.localdate()
+        )
+    except ValueError:
+        fecha_seleccionada = timezone.localdate()
+
+    horarios = obtener_horarios_disponibles(
+        especialidad,
+        hospital,
+        fecha_seleccionada,
     )
 
-    especialidad = get_object_or_404(
-        Especialidad,
-        id=especialidad_id,
-        activo=True
+    return render(
+        request,
+        "citas/horarios.html",
+        {
+            "hospital": hospital,
+            "especialidad": especialidad,
+            "fecha": fecha_seleccionada,
+            "horarios": horarios,
+            "sin_medicos": False,
+        },
     )
+
+
+@login_required
+def confirmar_cita(request, hospital_id, especialidad_id):
+    hospital = get_object_or_404(
+        Hospital,
+        id=hospital_id,
+        activo=True,
+    )
+    especialidad = obtener_especialidad(hospital, especialidad_id)
+
+    if not especialidad_con_medicos(hospital, especialidad):
+        messages.warning(
+            request,
+            "Esta especialidad estará disponible próximamente.",
+        )
+        return redirect(
+            "seleccionar_horario",
+            hospital_id=hospital.id,
+            especialidad_id=especialidad.id,
+        )
 
     fecha = request.GET.get("fecha")
     hora = request.GET.get("hora")
@@ -38,6 +120,7 @@ def confirmar_cita(request, hospital_id, especialidad_id):
     try:
         fecha_seleccionada = date.fromisoformat(fecha)
     except ValueError:
+        messages.error(request, "La fecha seleccionada no es válida.")
         return redirect(
             "seleccionar_horario",
             hospital_id=hospital.id,
@@ -52,22 +135,29 @@ def confirmar_cita(request, hospital_id, especialidad_id):
             "especialidad": especialidad,
             "fecha": fecha_seleccionada,
             "hora": hora,
-        }
+        },
     )
+
 
 @login_required
 def crear_cita_view(request, hospital_id, especialidad_id):
     hospital = get_object_or_404(
         Hospital,
         id=hospital_id,
-        activo=True
+        activo=True,
     )
+    especialidad = obtener_especialidad(hospital, especialidad_id)
 
-    especialidad = get_object_or_404(
-        Especialidad,
-        id=especialidad_id,
-        activo=True
-    )
+    if not especialidad_con_medicos(hospital, especialidad):
+        messages.warning(
+            request,
+            "Esta especialidad estará disponible próximamente.",
+        )
+        return redirect(
+            "seleccionar_horario",
+            hospital_id=hospital.id,
+            especialidad_id=especialidad.id,
+        )
 
     if request.method != "POST":
         return redirect(
@@ -81,10 +171,7 @@ def crear_cita_view(request, hospital_id, especialidad_id):
     motivo = request.POST.get("motivo", "").strip()
 
     if not fecha or not hora or not motivo:
-        messages.error(
-            request,
-            "Todos los campos son obligatorios."
-        )
+        messages.error(request, "Todos los campos son obligatorios.")
         return redirect(
             "seleccionar_horario",
             hospital_id=hospital.id,
@@ -94,15 +181,13 @@ def crear_cita_view(request, hospital_id, especialidad_id):
     try:
         fecha_hora = datetime.strptime(
             f"{fecha} {hora}",
-            "%Y-%m-%d %H:%M"
+            "%Y-%m-%d %H:%M",
         )
-
         fecha_hora = timezone.make_aware(fecha_hora)
-
     except ValueError:
         messages.error(
             request,
-            "La fecha u hora seleccionada no es válida."
+            "La fecha u hora seleccionada no es válida.",
         )
         return redirect(
             "seleccionar_horario",
@@ -121,9 +206,8 @@ def crear_cita_view(request, hospital_id, especialidad_id):
     if cita is None:
         messages.error(
             request,
-            "El horario seleccionado ya no está disponible."
+            "El horario seleccionado ya no está disponible.",
         )
-
         return redirect(
             "seleccionar_horario",
             hospital_id=hospital.id,
@@ -133,54 +217,14 @@ def crear_cita_view(request, hospital_id, especialidad_id):
     return render(
         request,
         "citas/cita_creada.html",
-        {"cita": cita}
+        {"cita": cita},
     )
 
-
-def seleccionar_horario(request, hospital_id, especialidad_id):
-    hospital = get_object_or_404(
-        Hospital,
-        id=hospital_id,
-        activo=True
-    )
-
-    especialidad = get_object_or_404(
-        Especialidad,
-        id=especialidad_id,
-        activo=True
-    )
-
-    fecha = request.GET.get("fecha")
-
-    if fecha:
-        try:
-            fecha_seleccionada = date.fromisoformat(fecha)
-        except ValueError:
-            fecha_seleccionada = date.today()
-    else:
-        fecha_seleccionada = date.today()
-
-    horarios = obtener_horarios_disponibles(
-        especialidad,
-        hospital,
-        fecha_seleccionada,
-    )
-
-    return render(
-        request,
-        "citas/horarios.html",
-        {
-            "hospital": hospital,
-            "especialidad": especialidad,
-            "fecha": fecha_seleccionada,
-            "horarios": horarios,
-        }
-    )
 
 @login_required
 def mis_citas(request):
     citas = Cita.objects.filter(
-        paciente=request.user
+        paciente=request.user,
     ).select_related(
         "hospital",
         "especialidad",
@@ -191,17 +235,16 @@ def mis_citas(request):
     return render(
         request,
         "citas/mis_citas.html",
-        {
-            "citas": citas,
-        }
+        {"citas": citas},
     )
-    
+
+
 @login_required
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(
         Cita,
         id=cita_id,
-        paciente=request.user
+        paciente=request.user,
     )
 
     if request.method != "POST":
@@ -211,33 +254,18 @@ def cancelar_cita_view(request, cita_id):
         Cita.Estado.PENDIENTE,
         Cita.Estado.CONFIRMADA,
     ]:
+        messages.error(request, "Esta cita no se puede cancelar.")
+        return redirect("mis_citas")
+
+    cancelada = cancelar_cita(cita)
+
+    if not cancelada:
         messages.error(
             request,
-            "Esta cita no se puede cancelar."
+            "No puedes cancelar una cita con menos de "
+            "12 horas de anticipación.",
         )
         return redirect("mis_citas")
 
-    ahora = timezone.now()
-    limite = cita.fecha_hora - timezone.timedelta(hours=12)
-
-    if ahora > limite:
-        messages.error(
-            request,
-            "No puedes cancelar una cita con menos de 12 horas de anticipación."
-        )
-        return redirect("mis_citas")
-
-    cita.estado = Cita.Estado.CANCELADA
-    cita.save(
-        update_fields=[
-            "estado",
-            "fecha_actualizacion",
-        ]
-    )
-
-    messages.success(
-        request,
-        "La cita fue cancelada correctamente."
-    )
-
+    messages.success(request, "La cita fue cancelada correctamente.")
     return redirect("mis_citas")

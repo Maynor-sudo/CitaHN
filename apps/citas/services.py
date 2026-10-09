@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 
+from django.db import transaction
 from django.utils import timezone
 
-from apps.citas.models import Cita
+from apps.citas.models import Cita, OfertaCita, HorarioLiberado
 from apps.medicos.models import BloqueoHorario
 
- 
+
 DURACION_CITA = timedelta(minutes=20)
 
 
@@ -51,10 +52,16 @@ def obtener_slots_disponibles(medico, disponibilidad, fecha):
         fin__date__gte=fecha,
     )
 
+    ahora = timezone.now()
+
     slots_disponibles = []
 
     for slot in slots:
         slot_fin = slot + DURACION_CITA
+
+        # Nunca mostrar un horario que ya comenzó.
+        if slot <= ahora:
+            continue
 
         ocupado = slot in citas_ocupadas
 
@@ -67,6 +74,7 @@ def obtener_slots_disponibles(medico, disponibilidad, fecha):
             slots_disponibles.append(slot)
 
     return slots_disponibles
+
 
 def asignar_medico(especialidad, hospital, fecha_hora):
     medicos = list(
@@ -100,11 +108,14 @@ def asignar_medico(especialidad, hospital, fecha_hora):
     )
 
     for medico in medicos_rotacion:
+
         disponibilidad = medico.disponibilidades.filter(
             dia_semana=fecha_hora.weekday(),
             activo=True,
             hora_inicio__lte=fecha_hora.time(),
-            hora_fin__gte=(fecha_hora + DURACION_CITA).time(),
+            hora_fin__gte=(
+                fecha_hora + DURACION_CITA
+            ).time(),
         ).first()
 
         if not disponibilidad:
@@ -130,11 +141,20 @@ def asignar_medico(especialidad, hospital, fecha_hora):
 
         if not ocupado:
             return medico
+
     return None
-def buscar_siguiente_slot(especialidad, hospital, fecha_inicio, dias_maximos=30):
+
+
+def buscar_siguiente_slot(
+    especialidad,
+    hospital,
+    fecha_inicio,
+    dias_maximos=30
+):
     fecha = fecha_inicio
 
     for _ in range(dias_maximos):
+
         medicos = especialidad.medicos.filter(
             hospital=hospital,
             activo=True,
@@ -142,12 +162,14 @@ def buscar_siguiente_slot(especialidad, hospital, fecha_inicio, dias_maximos=30)
         )
 
         for medico in medicos:
+
             disponibilidades = medico.disponibilidades.filter(
                 dia_semana=fecha.weekday(),
                 activo=True,
             )
 
             for disponibilidad in disponibilidades:
+
                 slots = obtener_slots_disponibles(
                     medico,
                     disponibilidad,
@@ -155,6 +177,7 @@ def buscar_siguiente_slot(especialidad, hospital, fecha_inicio, dias_maximos=30)
                 )
 
                 for slot in slots:
+
                     if slot >= timezone.make_aware(
                         datetime.combine(
                             fecha_inicio,
@@ -164,9 +187,15 @@ def buscar_siguiente_slot(especialidad, hospital, fecha_inicio, dias_maximos=30)
                         return slot
 
         fecha += timedelta(days=1)
+
     return None
 
-def obtener_horarios_disponibles(especialidad, hospital, fecha):
+
+def obtener_horarios_disponibles(
+    especialidad,
+    hospital,
+    fecha
+):
     horarios = []
 
     medicos = especialidad.medicos.filter(
@@ -176,12 +205,14 @@ def obtener_horarios_disponibles(especialidad, hospital, fecha):
     )
 
     for medico in medicos:
+
         disponibilidades = medico.disponibilidades.filter(
             dia_semana=fecha.weekday(),
             activo=True,
         )
 
         for disponibilidad in disponibilidades:
+
             slots = obtener_slots_disponibles(
                 medico,
                 disponibilidad,
@@ -189,16 +220,21 @@ def obtener_horarios_disponibles(especialidad, hospital, fecha):
             )
 
             for slot in slots:
+
                 if slot not in horarios:
                     horarios.append(slot)
 
     return sorted(horarios)
 
-from django.db import transaction
-
 
 @transaction.atomic
-def crear_cita(paciente, especialidad, hospital, fecha_hora, motivo):
+def crear_cita(
+    paciente,
+    especialidad,
+    hospital,
+    fecha_hora,
+    motivo
+):
     medico = asignar_medico(
         especialidad,
         hospital,
@@ -220,9 +256,8 @@ def crear_cita(paciente, especialidad, hospital, fecha_hora, motivo):
 
     return cita
 
-from django.utils import timezone
 
-
+@transaction.atomic
 def cancelar_cita(cita):
     ahora = timezone.now()
     limite = cita.fecha_hora - timedelta(hours=12)
@@ -231,18 +266,36 @@ def cancelar_cita(cita):
         return False
 
     cita.estado = Cita.Estado.CANCELADA
-    cita.save(update_fields=["estado", "fecha_actualizacion"])
+
+    cita.save(
+        update_fields=[
+            "estado",
+            "fecha_actualizacion",
+        ]
+    )
+
+    horario_liberado = HorarioLiberado.objects.create(
+        hospital=cita.hospital,
+        especialidad=cita.especialidad,
+        medico=cita.medico,
+        fecha_hora=cita.fecha_hora,
+    )
+
+    crear_oferta_siguiente(horario_liberado)
 
     return True
 
-def buscar_candidatos_oferta(cita_liberada):
+
+def buscar_candidatos_oferta(horario_liberado):
+
     ahora = timezone.now()
+
     limite_48_horas = ahora + timedelta(hours=48)
 
     candidatos = Cita.objects.filter(
-        especialidad=cita_liberada.especialidad,
-        hospital=cita_liberada.hospital,
-        fecha_hora__gt=cita_liberada.fecha_hora,
+        especialidad=horario_liberado.especialidad,
+        hospital=horario_liberado.hospital,
+        fecha_hora__gt=horario_liberado.fecha_hora,
         fecha_hora__gte=limite_48_horas,
         estado__in=[
             Cita.Estado.PENDIENTE,
@@ -250,7 +303,7 @@ def buscar_candidatos_oferta(cita_liberada):
         ],
     ).exclude(
         paciente__in=OfertaCita.objects.filter(
-            cita_origen=cita_liberada
+            horario_liberado=horario_liberado
         ).values("paciente")
     ).order_by(
         "fecha_solicitud"
@@ -258,76 +311,124 @@ def buscar_candidatos_oferta(cita_liberada):
 
     return candidatos
 
-def crear_oferta_siguiente(cita_liberada):
+
+def crear_oferta_siguiente(horario_liberado):
+
+    if not horario_liberado.disponible:
+        return None
+
     ofertas_realizadas = OfertaCita.objects.filter(
-        cita_origen=cita_liberada
+        horario_liberado=horario_liberado
     ).count()
 
     if ofertas_realizadas >= 2:
         return None
 
-    candidato = buscar_candidatos_oferta(cita_liberada).first()
+    candidato = buscar_candidatos_oferta(
+        horario_liberado
+    ).first()
 
     if not candidato:
         return None
 
     return OfertaCita.objects.create(
-        cita_origen=cita_liberada,
+        horario_liberado=horario_liberado,
         paciente=candidato.paciente,
     )
 
 
 @transaction.atomic
 def aceptar_oferta(oferta):
+
     if oferta.aceptada is not None:
         return False
 
-    cita_nueva = oferta.cita_origen
+    horario_nuevo = oferta.horario_liberado
+
+    if horario_nuevo is None:
+        return False
+
+    if not horario_nuevo.disponible:
+        return False
+
     cita_actual = Cita.objects.filter(
         paciente=oferta.paciente,
-        especialidad=cita_nueva.especialidad,
-        hospital=cita_nueva.hospital,
-        fecha_hora__gt=cita_nueva.fecha_hora,
+        especialidad=horario_nuevo.especialidad,
+        hospital=horario_nuevo.hospital,
+        fecha_hora__gt=horario_nuevo.fecha_hora,
         estado__in=[
             Cita.Estado.PENDIENTE,
             Cita.Estado.CONFIRMADA,
         ],
-    ).order_by("fecha_solicitud").first()
+    ).order_by(
+        "fecha_solicitud"
+    ).first()
 
     if not cita_actual:
+
         oferta.aceptada = False
-        oferta.save(update_fields=["aceptada"])
+
+        oferta.save(
+            update_fields=["aceptada"]
+        )
+
         return False
 
-    medico = asignar_medico(
-        cita_nueva.especialidad,
-        cita_nueva.hospital,
-        cita_nueva.fecha_hora,
+    fecha_anterior = cita_actual.fecha_hora
+    medico_anterior = cita_actual.medico
+
+    cita_actual.fecha_hora = horario_nuevo.fecha_hora
+    cita_actual.medico = horario_nuevo.medico
+    cita_actual.estado = Cita.Estado.CONFIRMADA
+
+    cita_actual.save(
+        update_fields=[
+            "fecha_hora",
+            "medico",
+            "estado",
+            "fecha_actualizacion",
+        ]
     )
 
-    if medico is None:
-        return False
+    horario_nuevo.disponible = False
 
-    cita_actual.fecha_hora = cita_nueva.fecha_hora
-    cita_actual.medico = medico
-    cita_actual.estado = Cita.Estado.CONFIRMADA
-    cita_actual.save(
-        update_fields=["fecha_hora", "medico", "estado", "fecha_actualizacion"]
+    horario_nuevo.save(
+        update_fields=["disponible"]
     )
 
     oferta.aceptada = True
-    oferta.save(update_fields=["aceptada"])
+
+    oferta.save(
+        update_fields=["aceptada"]
+    )
+
+    horario_anterior = HorarioLiberado.objects.create(
+        hospital=cita_actual.hospital,
+        especialidad=cita_actual.especialidad,
+        medico=medico_anterior,
+        fecha_hora=fecha_anterior,
+    )
+
+    crear_oferta_siguiente(
+        horario_anterior
+    )
 
     return True
 
 
 def rechazar_oferta(oferta):
+
     if oferta.aceptada is not None:
         return False
 
     oferta.aceptada = False
-    oferta.save(update_fields=["aceptada"])
 
-    crear_oferta_siguiente(oferta.cita_origen)
+    oferta.save(
+        update_fields=["aceptada"]
+    )
+
+    crear_oferta_siguiente(
+        oferta.horario_liberado
+    )
 
     return True
