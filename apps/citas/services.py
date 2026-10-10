@@ -365,26 +365,12 @@ def aceptar_oferta(oferta):
     fecha_anterior = cita_actual.fecha_hora
     medico_anterior = cita_actual.medico
 
-
     try:
         with transaction.atomic():
-            # Liberar primero la fecha anterior de la cita.
-            cita_actual.fecha_hora = fecha_anterior
-            cita_actual.medico = medico_anterior
-            cita_actual.estado = Cita.Estado.CANCELADA
-            cita_actual.save(
-                update_fields=[
-                    "fecha_hora",
-                    "medico",
-                    "estado",
-                    "fecha_actualizacion",
-                ]
-            )
-
-            # Reasignar la cita al horario ofrecido.
             cita_actual.fecha_hora = horario_nuevo.fecha_hora
             cita_actual.medico = medico_nuevo
             cita_actual.estado = Cita.Estado.CONFIRMADA
+
             cita_actual.save(
                 update_fields=[
                     "fecha_hora",
@@ -396,7 +382,6 @@ def aceptar_oferta(oferta):
     except IntegrityError as error:
         print("ERROR DE INTEGRIDAD:", error)
         return False
-
 
     print("PASO 4: cita guardada")
 
