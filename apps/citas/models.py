@@ -57,13 +57,16 @@ class Cita(models.Model):
             f"{self.fecha_hora:%d/%m/%Y %H:%M}"
         )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["medico", "fecha_hora"],
-                name="cita_medico_fecha_unica"
-            )
-        ]
+class Meta:
+    constraints = [
+        models.UniqueConstraint(
+            fields=["medico", "fecha_hora"],
+            condition=models.Q(
+                estado__in=["PENDIENTE", "CONFIRMADA"]
+            ),
+            name="cita_medico_fecha_unica",
+        )
+    ]
 
 class HorarioLiberado(models.Model):
 

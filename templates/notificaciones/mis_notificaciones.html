@@ -1,0 +1,70 @@
+
+{% extends "base/base.html" %}
+
+{% block title %}Mis notificaciones | CitaHN{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="fw-bold mb-2">Mis notificaciones</h1>
+
+        <p class="text-secondary mb-4">
+            Consulta tus avisos y las ofertas de horarios disponibles.
+        </p>
+
+        {% for notificacion in notificaciones %}
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+
+                    <span class="badge text-bg-primary mb-2">
+                        {{ notificacion.get_tipo_display }}
+                    </span>
+
+                    <p class="mb-2">{{ notificacion.mensaje }}</p>
+
+                    <small class="text-secondary">
+                        {{ notificacion.fecha_creacion|date:"d/m/Y H:i" }}
+                    </small>
+
+                    {% if notificacion.tipo == "OFERTA" %}
+                        {% if notificacion.oferta_cita %}
+                            {% if notificacion.oferta_cita.aceptada == None %}
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    <form method="post"
+                                          action="{% url 'aceptar_oferta' notificacion.oferta_cita.id %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-success" type="submit">
+                                            Aceptar oferta
+                                        </button>
+                                    </form>
+
+                                    <form method="post"
+                                          action="{% url 'rechazar_oferta' notificacion.oferta_cita.id %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-danger" type="submit">
+                                            Rechazar oferta
+                                        </button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <span class="badge text-bg-secondary mt-2">
+                                    Oferta procesada
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-secondary small mt-2 mb-0">
+                                Esta notificación no tiene una oferta asociada.
+                            </p>
+                        {% endif %}
+                    {% endif %}
+
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info rounded-4">
+                No tienes notificaciones por ahora.
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

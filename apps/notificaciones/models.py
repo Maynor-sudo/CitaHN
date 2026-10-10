@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from django.db import models
 
@@ -18,22 +19,36 @@ class Notificacion(models.Model):
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="notificaciones"
+        related_name="notificaciones",
     )
 
-    tipo = models.CharField(max_length=20, choices=Tipo.choices)
+    oferta_cita = models.ForeignKey(
+        "citas.OfertaCita",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notificaciones",
+    )
 
-    canal = models.CharField(max_length=10, choices=Canal.choices)
+    tipo = models.CharField(
+        max_length=20,
+        choices=Tipo.choices,
+    )
+
+    canal = models.CharField(
+        max_length=10,
+        choices=Canal.choices,
+    )
 
     mensaje = models.TextField()
-
     enviada = models.BooleanField(default=False)
+    leida = models.BooleanField(default=False)
 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     fecha_envio = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
     )
 
     def __str__(self):

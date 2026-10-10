@@ -1,3 +1,4 @@
+
 {% extends "base/base.html" %}
 
 {% block title %}Horarios | CitaHN{% endblock %}
@@ -19,54 +20,54 @@
             Selecciona una fecha y luego el horario que prefieras.
         </p>
 
-<form method="get" class="row g-3 mb-5">
+        <form method="get" class="row g-3 mb-5">
 
-    <div class="col-md-6">
-        <label for="fecha" class="form-label fw-semibold">
-            Fecha
-        </label>
+            <div class="col-md-6">
+                <label for="fecha" class="form-label fw-semibold">
+                    Fecha
+                </label>
 
-        <input
-            type="date"
-            id="fecha"
-            name="fecha"
-            class="form-control form-control-lg"
-            value="{{ fecha|date:'Y-m-d' }}"
-            min="{{ fecha|date:'Y-m-d' }}"
-            onchange="this.form.submit()"
-        >
-    </div>
+                <input
+                    type="date"
+                    id="fecha"
+                    name="fecha"
+                    class="form-control form-control-lg"
+                    value="{{ fecha|date:'Y-m-d' }}"
+                    min="{{ hoy|date:'Y-m-d' }}"
+                    onchange="this.form.submit()"
+                >
+            </div>
 
-</form>
+        </form>
 
         {% if horarios %}
 
-        <h4 class="fw-bold mb-3">
-            Horarios disponibles
-        </h4>
+            <h4 class="fw-bold mb-3">
+                Horarios disponibles
+            </h4>
 
-        <div class="row g-3">
+            <div class="row g-3">
 
-            {% for horario in horarios %}
+                {% for horario in horarios %}
 
-            <div class="col-6 col-md-4 col-lg-3">
+                    <div class="col-6 col-md-4 col-lg-3">
 
-                <a href="{% url 'confirmar_cita' hospital.id especialidad.id %}?fecha={{ fecha|date:'Y-m-d' }}&hora={{ horario|date:'H:i' }}"
-                    class="btn btn-outline-primary btn-lg w-100 py-3">
-                    {{ horario|date:"H:i" }}
-                </a>
+                        <a href="{% url 'confirmar_cita' hospital.id especialidad.id %}?fecha={{ fecha|date:'Y-m-d' }}&hora={{ horario|date:'H:i' }}"
+                           class="btn btn-outline-primary btn-lg w-100 py-3">
+                            {{ horario|date:"H:i" }}
+                        </a>
+
+                    </div>
+
+                {% endfor %}
 
             </div>
 
-            {% endfor %}
-
-        </div>
-
         {% else %}
 
-        <div class="alert alert-info rounded-4">
-            No hay horarios disponibles para esta fecha.
-        </div>
+            <div class="alert alert-info rounded-4">
+                No hay horarios disponibles para esta fecha.
+            </div>
 
         {% endif %}
 

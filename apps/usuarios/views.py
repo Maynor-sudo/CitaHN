@@ -1,5 +1,6 @@
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect
+from django.urls import reverse
 
 from .forms import RegistroUsuarioForm
 
@@ -11,6 +12,12 @@ def inicio(request):
 class UsuarioLoginView(LoginView):
     template_name = "usuarios/login.html"
     redirect_authenticated_user = True
+
+    def get_success_url(self):
+        if self.request.user.rol == "MEDICO":
+            return reverse("agenda_medico")
+
+        return super().get_success_url()
 
 
 def registro(request):

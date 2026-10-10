@@ -1,0 +1,184 @@
+
+{% extends "base/base.html" %}
+
+{% block title %}Agenda médica | CitaHN{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <p class="text-primary fw-semibold mb-1">
+                    Panel del médico
+                </p>
+                <h1 class="fw-bold mb-1">Mi agenda</h1>
+                <p class="text-secondary mb-0">
+                    {{ medico.usuario.nombre }} {{ medico.usuario.apellido }}
+                </p>
+            </div>
+
+            <a
+                href="{% url 'reporte_pdf_medico' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}"
+                class="btn btn-primary rounded-3"
+            >
+                <i class="bi bi-file-earmark-pdf me-2"></i>
+                Generar reporte PDF
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">Filtrar agenda</h5>
+
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label for="desde" class="form-label">Fecha inicial</label>
+                        <input
+                            type="date"
+                            id="desde"
+                            name="desde"
+                            class="form-control"
+                            value="{{ desde|date:'Y-m-d' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label for="hasta" class="form-label">Fecha final</label>
+                        <input
+                            type="date"
+                            id="hasta"
+                            name="hasta"
+                            class="form-control"
+                            value="{{ hasta|date:'Y-m-d' }}"
+                            min="{{ desde|date:'Y-m-d' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            Consultar citas
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0">Citas del período</h4>
+            <span class="badge text-bg-primary rounded-pill">
+                {{ citas|length }} citas
+            </span>
+        </div>
+
+        {% for cita in citas %}
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <div class="row g-3 align-items-center">
+
+                        <div class="col-12 col-md-2">
+                            <p class="text-secondary small mb-1">Fecha y hora</p>
+                            <p class="fw-bold mb-0">
+                                {{ cita.fecha_hora|date:"d/m/Y" }}
+                            </p>
+                            <p class="text-primary mb-0">
+                                {{ cita.fecha_hora|date:"H:i" }}
+                            </p>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <p class="text-secondary small mb-1">Paciente</p>
+                            <h5 class="fw-bold mb-1">
+                                {{ cita.paciente.nombre }} {{ cita.paciente.apellido }}
+                            </h5>
+                            <p class="text-secondary small mb-1">
+                                Identidad: {{ cita.paciente.identidad }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Motivo:</strong> {{ cita.motivo }}
+                            </p>
+                        </div>
+
+                        <div class="col-12 col-md-2">
+                            <p class="text-secondary small mb-1">Estado</p>
+
+                            {% if cita.estado == "ATENDIDA" %}
+                                <span class="badge text-bg-success">Atendida</span>
+                            {% elif cita.estado == "NO_ASISTIO" %}
+                                <span class="badge text-bg-danger">No asistió</span>
+                            {% elif cita.estado == "CANCELADA" %}
+                                <span class="badge text-bg-secondary">Cancelada</span>
+                            {% elif cita.estado == "CONFIRMADA" %}
+                                <span class="badge text-bg-primary">Confirmada</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">Pendiente</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            {% if cita.fecha_hora.date <= hoy and cita.estado == "PENDIENTE" or cita.fecha_hora.date <= hoy and cita.estado == "CONFIRMADA" %}
+                                <form method="post" action="{% url 'actualizar_estado_cita' cita.id %}" class="d-flex flex-wrap gap-2">
+                                    {% csrf_token %}
+                                    <button
+                                        type="submit"
+                                        name="estado"
+                                        value="ATENDIDA"
+                                        class="btn btn-success btn-sm"
+                                    >
+                                        Se presentó
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        name="estado"
+                                        value="NO_ASISTIO"
+                                        class="btn btn-outline-danger btn-sm"
+                                    >
+                                        No asistió
+                                    </button>
+                                </form>
+                            {% elif cita.estado == "ATENDIDA" or cita.estado == "NO_ASISTIO" %}
+                                <span class="text-success small">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Asistencia registrada
+                                </span>
+                            {% elif cita.estado == "CANCELADA" %}
+                                <span class="text-secondary small">
+                                    Cita cancelada
+                                </span>
+                            {% else %}
+                                <span class="text-secondary small">
+                                    Disponible para registrar el día de la cita
+                                </span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-calendar2-x display-4 text-secondary"></i>
+                    <h5 class="fw-bold mt-3">No hay citas en este período</h5>
+                    <p class="text-secondary mb-0">
+                        Prueba seleccionando otro rango de fechas.
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+</section>
+{% endblock %}
