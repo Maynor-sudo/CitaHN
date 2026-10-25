@@ -121,6 +121,10 @@ TIME_ZONE = "America/Tegucigalpa"
 USE_I18N = True
 USE_TZ = True
 
+#imagenes
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # Archivos estáticos
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
