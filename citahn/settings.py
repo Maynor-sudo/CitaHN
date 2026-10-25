@@ -8,18 +8,13 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Seguridad
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-solo-para-desarrollo-local"
-)
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-solo-para-desarrollo-local")
 
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv(
-        "ALLOWED_HOSTS", "localhost,127.0.0.1"
-    ).split(",")
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
 
@@ -37,6 +32,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "cloudinary_storage",
+    "cloudinary",
     "apps.usuarios",
     "apps.hospitales",
     "apps.medicos",
@@ -121,7 +118,7 @@ TIME_ZONE = "America/Tegucigalpa"
 USE_I18N = True
 USE_TZ = True
 
-#imagenes
+# imagenes
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -132,7 +129,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -153,3 +150,18 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": os.getenv("syb1p0k3"),
+        "API_KEY": os.getenv("922888661679968"),
+        "API_SECRET": os.getenv("p4FP7_I2V-A7OAN8n3om_N6-QCA"),
+    }
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
