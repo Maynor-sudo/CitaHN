@@ -32,8 +32,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "cloudinary_storage",
-    "cloudinary",
     "apps.usuarios",
     "apps.hospitales",
     "apps.medicos",
@@ -129,7 +127,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -156,12 +154,3 @@ if not DEBUG:
         "API_KEY": os.getenv("922888661679968"),
         "API_SECRET": os.getenv("p4FP7_I2V-A7OAN8n3om_N6-QCA"),
     }
-
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
