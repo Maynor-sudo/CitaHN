@@ -117,13 +117,29 @@
         {% block content %}{% endblock %}
     </main>
 
+
     <footer class="bg-light text-center py-4 mt-5">
         <div class="container">
+
+            <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
+                <img src="{% static 'img/UTH.png' %}" alt="Universidad Tecnológica de Honduras"
+                    style="height: 48px; max-width: 180px; object-fit: contain;">
+
+                <img src="{% static 'img/logo_citahn.png' %}" alt="CitaHN"
+                    style="height: 48px; max-width: 150px; object-fit: contain;">
+            </div>
+
+            <p class="text-secondary mb-1">
+                Proyecto de graduación — Universidad Tecnológica de Honduras
+            </p>
+
             <p class="mb-0">
                 © {% now "Y" %} CitaHN — Sistema de Gestión de Citas Médicas by Maynor Martinez
             </p>
+
         </div>
     </footer>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 

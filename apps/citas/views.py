@@ -12,6 +12,7 @@ from apps.citas.models import OfertaCita
 from apps.citas.services import aceptar_oferta, rechazar_oferta
 
 from reportlab.lib import colors
+from django.utils import timezone
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -316,22 +317,54 @@ def descargar_comprobante_cita(request, cita_id):
         spaceAfter=18,
     )
 
-    # Coloca el logo en static/img/logo_citahn.png
-    ruta_logo = os.path.join(
-        settings.BASE_DIR,
-        "static",
-        "img",
-        "logo_citahn.png",
+    # Logos institucionales
+    ruta_logo_uth = os.path.join(settings.BASE_DIR, "static", "img", "UTH.png")
+    ruta_logo_citahn = os.path.join(
+        settings.BASE_DIR, "static", "img", "logo_citahn.png"
     )
 
-    if os.path.exists(ruta_logo):
-        logo = Image(ruta_logo, width=5 * cm, height=5 * cm)
-        logo.hAlign = "CENTER"
-        elementos.append(logo)
-        elementos.append(Spacer(1, 8))
+    logo_uth = ""
+    logo_citahn = ""
 
+    if os.path.exists(ruta_logo_uth):
+        logo_uth = Image(
+            ruta_logo_uth,
+            width=3.2 * cm,
+            height=2.3 * cm,
+            kind="proportional",
+        )
+
+    if os.path.exists(ruta_logo_citahn):
+        logo_citahn = Image(
+            ruta_logo_citahn,
+            width=3.2 * cm,
+            height=2.3 * cm,
+            kind="proportional",
+        )
+
+    encabezado_logos = Table(
+        [[logo_uth, "", logo_citahn]],
+        colWidths=[4 * cm, 8 * cm, 4 * cm],
+    )
+
+    encabezado_logos.setStyle(
+        TableStyle(
+            [
+                ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    elementos.append(encabezado_logos)
+    elementos.append(Spacer(1, 5))
     elementos.append(Paragraph("CitaHN", titulo))
-    elementos.append(Paragraph("Comprobante de cita médica", subtitulo))
+    elementos.append(Paragraph("COMPROBANTE DE CITA MÉDICA", subtitulo))
     elementos.append(Spacer(1, 8))
 
     nombre_paciente = escape(f"{cita.paciente.nombre} {cita.paciente.apellido}")
@@ -351,8 +384,8 @@ def descargar_comprobante_cita(request, cita_id):
         ["Hospital", nombre_hospital],
         ["Departamento", departamento],
         ["Dirección", direccion],
-        ["Fecha", cita.fecha_hora.strftime("%d/%m/%Y")],
-        ["Hora", cita.fecha_hora.strftime("%H:%M")],
+        ["Fecha", timezone.localtime(cita.fecha_hora).strftime("%d/%m/%Y")],
+        ["Hora", timezone.localtime(cita.fecha_hora).strftime("%H:%M")],
         ["Estado", estado],
         ["Motivo", motivo],
     ]
@@ -645,23 +678,61 @@ def reporte_pdf_medico(request):
         leading=13,
     )
 
-    ruta_logo = os.path.join(
+    # Logos institucionales
+    ruta_logo_uth = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "UTH.png",
+    )
+
+    ruta_logo_citahn = os.path.join(
         settings.BASE_DIR,
         "static",
         "img",
         "logo_citahn.png",
     )
 
-    if os.path.exists(ruta_logo):
-        logo = Image(
-            ruta_logo,
+    logo_uth = ""
+    logo_citahn = ""
+
+    if os.path.exists(ruta_logo_uth):
+        logo_uth = Image(
+            ruta_logo_uth,
             width=3.2 * cm,
-            height=3.2 * cm,
+            height=2.3 * cm,
             kind="proportional",
         )
-        logo.hAlign = "CENTER"
-        elementos.append(logo)
-        elementos.append(Spacer(1, 5))
+
+    if os.path.exists(ruta_logo_citahn):
+        logo_citahn = Image(
+            ruta_logo_citahn,
+            width=3.2 * cm,
+            height=2.3 * cm,
+            kind="proportional",
+        )
+
+    encabezado_logos = Table(
+        [[logo_uth, "", logo_citahn]],
+        colWidths=[4 * cm, 12 * cm, 4 * cm],
+    )
+
+    encabezado_logos.setStyle(
+        TableStyle(
+            [
+                ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    elementos.append(encabezado_logos)
+    elementos.append(Spacer(1, 5))
 
     elementos.append(Paragraph("CitaHN", titulo))
     elementos.append(Paragraph("AGENDA MÉDICA", subtitulo))
@@ -714,11 +785,11 @@ def reporte_pdf_medico(request):
 
         datos.append(
             [
-                cita.fecha_hora.strftime("%d/%m/%Y %H:%M"),
-                paciente,
-                cita.paciente.identidad,
-                cita.motivo,
-                cita.get_estado_display(),
+                timezone.localtime(cita.fecha_hora).strftime("%d/%m/%Y %H:%M"),
+                escape(paciente),
+                escape(str(cita.paciente.identidad or "")),
+                escape(str(cita.motivo or "No especificado")),
+                escape(cita.get_estado_display()),
             ]
         )
 
@@ -733,7 +804,13 @@ def reporte_pdf_medico(request):
         tabla = Table(
             datos,
             repeatRows=1,
-            colWidths=[3.2 * cm, 4.5 * cm, 3.0 * cm, 7.0 * cm, 3.0 * cm],
+            colWidths=[
+                3.2 * cm,
+                4.5 * cm,
+                3.0 * cm,
+                7.0 * cm,
+                3.0 * cm,
+            ],
         )
 
         tabla.setStyle(
@@ -743,7 +820,13 @@ def reporte_pdf_medico(request):
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("FONTSIZE", (0, 0), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#D4DEE5")),
+                    (
+                        "GRID",
+                        (0, 0),
+                        (-1, -1),
+                        0.4,
+                        colors.HexColor("#D4DEE5"),
+                    ),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     (
                         "ROWBACKGROUNDS",
