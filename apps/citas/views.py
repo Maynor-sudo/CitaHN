@@ -1,6 +1,10 @@
 from functools import wraps
 from io import BytesIO
 
+import os
+from xml.sax.saxutils import escape
+from django.conf import settings
+from reportlab.platypus import Image
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
 from apps.notificaciones.models import Notificacion
@@ -263,6 +267,147 @@ def mis_citas(request):
 
 
 @login_required
+def descargar_comprobante_cita(request, cita_id):
+    cita = get_object_or_404(
+        Cita.objects.select_related(
+            "paciente",
+            "hospital",
+            "hospital__departamento",
+            "especialidad",
+            "medico",
+            "medico__usuario",
+        ),
+        id=cita_id,
+        paciente=request.user,
+    )
+
+    respuesta = HttpResponse(content_type="application/pdf")
+    respuesta["Content-Disposition"] = (
+        f'attachment; filename="comprobante_cita_{cita.id}.pdf"'
+    )
+
+    documento = SimpleDocTemplate(
+        respuesta,
+        pagesize=A4,
+        rightMargin=2 * cm,
+        leftMargin=2 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
+    )
+
+    estilos = getSampleStyleSheet()
+    elementos = []
+
+    titulo = ParagraphStyle(
+        "TituloComprobante",
+        parent=estilos["Title"],
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#12345A"),
+        fontSize=20,
+        spaceAfter=8,
+    )
+
+    subtitulo = ParagraphStyle(
+        "SubtituloComprobante",
+        parent=estilos["Normal"],
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#009FA3"),
+        fontSize=11,
+        spaceAfter=18,
+    )
+
+    # Coloca el logo en static/img/logo_citahn.png
+    ruta_logo = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "logo_citahn.png",
+    )
+
+    if os.path.exists(ruta_logo):
+        logo = Image(ruta_logo, width=5 * cm, height=5 * cm)
+        logo.hAlign = "CENTER"
+        elementos.append(logo)
+        elementos.append(Spacer(1, 8))
+
+    elementos.append(Paragraph("CitaHN", titulo))
+    elementos.append(Paragraph("Comprobante de cita médica", subtitulo))
+    elementos.append(Spacer(1, 8))
+
+    nombre_paciente = escape(f"{cita.paciente.nombre} {cita.paciente.apellido}")
+    nombre_medico = escape(str(cita.medico))
+    nombre_hospital = escape(cita.hospital.nombre)
+    direccion = escape(cita.hospital.direccion)
+    departamento = escape(cita.hospital.departamento.nombre)
+    especialidad = escape(cita.especialidad.nombre)
+    motivo = escape(cita.motivo or "No especificado")
+    estado = escape(cita.get_estado_display())
+
+    datos = [
+        ["Número de cita", str(cita.id)],
+        ["Paciente", nombre_paciente],
+        ["Especialidad", especialidad],
+        ["Médico", nombre_medico],
+        ["Hospital", nombre_hospital],
+        ["Departamento", departamento],
+        ["Dirección", direccion],
+        ["Fecha", cita.fecha_hora.strftime("%d/%m/%Y")],
+        ["Hora", cita.fecha_hora.strftime("%H:%M")],
+        ["Estado", estado],
+        ["Motivo", motivo],
+    ]
+
+    tabla = Table(
+        datos,
+        colWidths=[4 * cm, 12 * cm],
+        hAlign="CENTER",
+    )
+
+    tabla.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EAF4F8")),
+                ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#12345A")),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D4DEE5")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 9),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+                ("TOPPADDING", (0, 0), (-1, -1), 9),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+            ]
+        )
+    )
+
+    elementos.append(tabla)
+    elementos.append(Spacer(1, 22))
+    elementos.append(
+        Paragraph(
+            "Presenta este comprobante al acudir a tu cita. "
+            "Verifica la fecha, hora y ubicación del hospital.",
+            estilos["Normal"],
+        )
+    )
+    elementos.append(Spacer(1, 12))
+    elementos.append(
+        Paragraph(
+            "CitaHN — Tu salud, a un clic.",
+            ParagraphStyle(
+                "PieComprobante",
+                parent=estilos["Normal"],
+                alignment=TA_CENTER,
+                textColor=colors.HexColor("#12345A"),
+            ),
+        )
+    )
+
+    documento.build(elementos)
+    return respuesta
+
+
+@login_required
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(
         Cita,
@@ -470,43 +615,86 @@ def reporte_pdf_medico(request):
     estilos = getSampleStyleSheet()
     elementos = []
 
+    azul = colors.HexColor("#12345A")
+    turquesa = colors.HexColor("#00A6A6")
+    gris_claro = colors.HexColor("#F1F5F9")
+
     titulo = ParagraphStyle(
         "TituloAgenda",
         parent=estilos["Title"],
         alignment=TA_CENTER,
-        textColor=colors.HexColor("#12345A"),
+        textColor=azul,
+        fontSize=20,
+        leading=24,
+        spaceAfter=5,
     )
 
-    elementos.append(Paragraph("CitaHN - Agenda médica", titulo))
-    elementos.append(Spacer(1, 8))
-
-    nombre_medico = (
-        f"{request.medico.usuario.nombre} " f"{request.medico.usuario.apellido}"
+    subtitulo = ParagraphStyle(
+        "SubtituloAgenda",
+        parent=estilos["Normal"],
+        alignment=TA_CENTER,
+        textColor=turquesa,
+        fontSize=11,
+        spaceAfter=14,
     )
 
+    texto = ParagraphStyle(
+        "TextoAgenda",
+        parent=estilos["Normal"],
+        fontSize=9,
+        leading=13,
+    )
+
+    ruta_logo = os.path.join(
+        settings.BASE_DIR,
+        "static",
+        "img",
+        "logo_citahn.png",
+    )
+
+    if os.path.exists(ruta_logo):
+        logo = Image(
+            ruta_logo,
+            width=3.2 * cm,
+            height=3.2 * cm,
+            kind="proportional",
+        )
+        logo.hAlign = "CENTER"
+        elementos.append(logo)
+        elementos.append(Spacer(1, 5))
+
+    elementos.append(Paragraph("CitaHN", titulo))
+    elementos.append(Paragraph("AGENDA MÉDICA", subtitulo))
+
     elementos.append(
         Paragraph(
-            f"<b>Médico:</b> {nombre_medico}",
-            estilos["Normal"],
+            f"<b>Médico:</b> {escape(str(request.medico))}",
+            texto,
         )
     )
+    elementos.append(Spacer(1, 4))
+
     elementos.append(
         Paragraph(
-            f"<b>Hospital:</b> {request.medico.hospital.nombre}",
-            estilos["Normal"],
+            f"<b>Hospital:</b> " f"{escape(request.medico.hospital.nombre)}",
+            texto,
         )
     )
+    elementos.append(Spacer(1, 4))
+
     elementos.append(
         Paragraph(
-            f"<b>Especialidad:</b> {request.medico.especialidad.nombre}",
-            estilos["Normal"],
+            f"<b>Especialidad:</b> " f"{escape(request.medico.especialidad.nombre)}",
+            texto,
         )
     )
+    elementos.append(Spacer(1, 4))
+
     elementos.append(
         Paragraph(
-            f"<b>Período:</b> {desde.strftime('%d/%m/%Y')} al "
-            f"{hasta.strftime('%d/%m/%Y')}",
-            estilos["Normal"],
+            f"<b>Período:</b> {desde.strftime('%d/%m/%Y')} "
+            f"al {hasta.strftime('%d/%m/%Y')}",
+            texto,
         )
     )
     elementos.append(Spacer(1, 12))
@@ -551,20 +739,17 @@ def reporte_pdf_medico(request):
         tabla.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#12345A")),
+                    ("BACKGROUND", (0, 0), (-1, 0), azul),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("FONTSIZE", (0, 0), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#D4DEE5")),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     (
                         "ROWBACKGROUNDS",
                         (0, 1),
                         (-1, -1),
-                        [
-                            colors.white,
-                            colors.HexColor("#F0F4F8"),
-                        ],
+                        [colors.white, gris_claro],
                     ),
                     ("LEFTPADDING", (0, 0), (-1, -1), 5),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 5),
@@ -578,7 +763,6 @@ def reporte_pdf_medico(request):
 
     documento.build(elementos)
     return respuesta
-
 
 
 @login_required
@@ -601,7 +785,6 @@ def mis_notificaciones(request):
         "notificaciones/mis_notificaciones.html",
         {"notificaciones": notificaciones},
     )
-
 
 
 @login_required

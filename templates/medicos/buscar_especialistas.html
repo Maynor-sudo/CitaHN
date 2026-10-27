@@ -1,0 +1,100 @@
+
+{% extends "base/base.html" %}
+
+{% block title %}Buscar especialistas | CitaHN{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+
+        <div class="text-center mb-4">
+            <h1 class="fw-bold">Encuentra tu especialista</h1>
+            <p class="text-secondary">
+                Busca por especialidad o nombre del médico.
+            </p>
+        </div>
+
+        <form method="get"
+              action="{% url 'buscar_especialistas' %}"
+              class="mx-auto mb-5"
+              style="max-width: 650px;">
+
+            <label for="busqueda" class="form-label fw-semibold">
+                Filtra especialistas
+            </label>
+
+            <input
+                id="busqueda"
+                type="search"
+                name="q"
+                value="{{ consulta }}"
+                class="form-control form-control-lg"
+                placeholder="Ej. Medicina general"
+                list="lista-especialidades"
+                autocomplete="off"
+            >
+
+            <datalist id="lista-especialidades">
+                {% for especialidad in especialidades %}
+                    <option value="{{ especialidad.nombre }}">
+                {% endfor %}
+            </datalist>
+
+            <button class="btn btn-primary mt-3 w-100" type="submit">
+                Buscar
+            </button>
+        </form>
+
+        {% if consulta %}
+            {% if resultados %}
+                <h2 class="h4 mb-4">
+                    Resultados para "{{ consulta }}"
+                </h2>
+
+                <div class="row g-4">
+                    {% for medico in resultados %}
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100 shadow-sm rounded-4">
+                                <div class="card-body p-4">
+                                    <h3 class="h5 fw-bold">
+                                        Dr. {{ medico.usuario.nombre }}
+                                        {{ medico.usuario.apellido }}
+                                    </h3>
+
+                                    <p class="text-primary mb-2">
+                                        {{ medico.especialidad.nombre }}
+                                    </p>
+
+                                    <p class="mb-1">
+                                        <strong>Hospital:</strong>
+                                        {{ medico.hospital.nombre }}
+                                    </p>
+
+                                    <p class="text-secondary mb-3">
+                                        <strong>Departamento:</strong>
+                                        {{ medico.hospital.departamento.nombre }}
+                                    </p>
+
+                                    <a
+                                        href="{% url 'seleccionar_horario' medico.hospital.id medico.especialidad.id %}"
+                                        class="btn btn-primary"
+                                    >
+                                        Ver horarios
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <div class="alert alert-info text-center">
+                    No encontramos especialistas que coincidan con
+                    "{{ consulta }}". Prueba con otra especialidad o nombre.
+                </div>
+            {% endif %}
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

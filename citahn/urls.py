@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from apps.usuarios.views import inicio
+from apps.medicos.views import buscar_especialistas
 from apps.hospitales.views import (
     seleccionar_departamento,
     seleccionar_hospital,
@@ -29,6 +30,7 @@ from apps.citas.views import (
     aceptar_oferta_view,
     rechazar_oferta_view,
 )
+from apps.citas.views import descargar_comprobante_cita
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -97,5 +99,15 @@ urlpatterns = [
         "ofertas/<int:oferta_id>/rechazar/",
         rechazar_oferta_view,
         name="rechazar_oferta",
+    ),
+    path(
+        "citas/buscar-especialistas/",
+        buscar_especialistas,
+        name="buscar_especialistas",
+    ),
+    path(
+        "citas/<int:cita_id>/comprobante-pdf/",
+        descargar_comprobante_cita,
+        name="descargar_comprobante_cita",
     ),
 ]
