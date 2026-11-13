@@ -24,6 +24,7 @@ from apps.citas.views import (
     agenda_medico,
     actualizar_estado_cita,
     reporte_pdf_medico,
+    reporte_excel_medico,
 )
 from apps.citas.views import (
     mis_notificaciones,
@@ -84,6 +85,11 @@ urlpatterns = [
         "medicos/agenda/pdf/",
         reporte_pdf_medico,
         name="reporte_pdf_medico",
+    ),
+    path(
+        "medicos/agenda/excel/",
+        reporte_excel_medico,
+        name="reporte_excel_medico",
     ),
     path(
         "notificaciones/",

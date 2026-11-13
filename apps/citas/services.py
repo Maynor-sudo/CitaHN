@@ -230,7 +230,7 @@ def cancelar_cita(cita):
     ahora = timezone.now()
     limite = cita.fecha_hora - timedelta(hours=12)
 
-    if ahora > limite:
+    if ahora >= limite:
         return False
 
     cita.estado = Cita.Estado.CANCELADA
@@ -307,8 +307,6 @@ def crear_oferta_siguiente(horario_liberado):
     notificar_oferta_cita(oferta)
 
     return oferta
-
-
 
 
 @transaction.atomic
@@ -402,8 +400,6 @@ def aceptar_oferta(oferta):
 
     print("PASO 5: oferta aceptada correctamente")
     return True
-
-
 
 
 def rechazar_oferta(oferta):

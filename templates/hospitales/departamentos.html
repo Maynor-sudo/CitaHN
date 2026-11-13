@@ -1,4 +1,3 @@
-
 {% extends "base/base.html" %}
 
 {% block title %}Seleccionar departamento | CitaHN{% endblock %}
@@ -8,49 +7,81 @@
 <section class="py-5">
     <div class="container">
 
-        <!-- Buscador de especialistas -->
+        <!-- Buscador -->
         <div class="text-center mb-5">
+
             <h2 class="fw-bold">Encuentra tu especialista</h2>
 
             <p class="text-secondary mb-4">
-                Busca por especialidad
+                Busca por especialidad o por hospital.
             </p>
 
-            <form
-                method="get"
-                action="{% url 'buscar_especialistas' %}"
-                class="mx-auto text-start"
-                style="max-width: 650px;"
-            >
-                <label for="busqueda-especialista" class="form-label fw-semibold">
-                    Filtra especialistas
-                </label>
+            <form method="get" action="{% url 'buscar_especialistas' %}" class="mx-auto text-start"
+                style="max-width: 750px;">
 
-                <input
-                    id="busqueda-especialista"
-                    type="search"
-                    name="q"
-                    class="form-control form-control-lg"
-                    placeholder="Ej. Dentista"
-                    list="lista-especialidades"
-                    autocomplete="off"
-                    required
-                >
+                <div class="row g-2 align-items-end">
 
-                <datalist id="lista-especialidades">
-                    {% for especialidad in especialidades_busqueda %}
-                        <option value="{{ especialidad.nombre }}">
-                    {% endfor %}
-                </datalist>
+                    <div class="col-12 col-md-4">
 
-                <button type="submit" class="btn btn-primary w-100 mt-3">
-                    Buscar especialista
-                </button>
+                        <label for="tipo-busqueda" class="form-label fw-semibold">
+                            Buscar por
+                        </label>
+
+                        <select name="tipo" id="tipo-busqueda" class="form-select form-select-lg">
+                            <option value="especialidad">
+                                Especialidad
+                            </option>
+
+                            <option value="hospital">
+                                Hospital
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div class="col-12 col-md-8">
+
+                        <label for="busqueda-especialista" class="form-label fw-semibold">
+                            ¿Qué deseas buscar?
+                        </label>
+
+                        <input id="busqueda-especialista" type="search" name="q" class="form-control form-control-lg"
+                            placeholder="Ej. Cardiología" list="lista-especialidades" autocomplete="off" required>
+
+                        <datalist id="lista-especialidades">
+                            {% for especialidad in especialidades_busqueda %}
+                            <option value="{{ especialidad.nombre }}">
+                            </option>
+                            {% endfor %}
+                        </datalist>
+
+                        <datalist id="lista-hospitales">
+                            {% for hospital in hospitales_busqueda %}
+                            <option value="{{ hospital.nombre }}">
+                            </option>
+                            {% endfor %}
+                        </datalist>
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
+                            Buscar
+                        </button>
+
+                    </div>
+
+                </div>
+
             </form>
+
         </div>
 
         <!-- Selección de departamentos -->
-        <h1 class="fw-bold mb-2">¿Dónde necesitas atención?</h1>
+        <h1 class="fw-bold mb-2">
+            ¿Dónde necesitas atención?
+        </h1>
 
         <p class="text-secondary mb-4">
             Selecciona el departamento donde deseas buscar un hospital.
@@ -60,28 +91,31 @@
 
             {% for departamento in departamentos %}
 
-                <div class="col-12 col-md-6 col-lg-4">
-                    <a
-                        href="{% url 'seleccionar_hospital' departamento.id %}"
-                        class="text-decoration-none"
-                    >
-                        <div class="card shadow-sm rounded-4 p-4 h-100">
-                            <h5 class="fw-bold text-dark mb-1">
-                                {{ departamento.nombre }}
-                            </h5>
+            <div class="col-12 col-md-6 col-lg-4">
 
-                            <span class="text-secondary">
-                                Ver hospitales →
-                            </span>
-                        </div>
-                    </a>
-                </div>
+                <a href="{% url 'seleccionar_hospital' departamento.id %}" class="text-decoration-none">
+
+                    <div class="card shadow-sm rounded-4 p-4 h-100">
+
+                        <h5 class="fw-bold text-dark mb-1">
+                            {{ departamento.nombre }}
+                        </h5>
+
+                        <span class="text-secondary">
+                            Ver hospitales →
+                        </span>
+
+                    </div>
+
+                </a>
+
+            </div>
 
             {% empty %}
 
-                <div class="alert alert-info">
-                    No hay departamentos disponibles actualmente.
-                </div>
+            <div class="alert alert-info">
+                No hay departamentos disponibles actualmente.
+            </div>
 
             {% endfor %}
 
@@ -89,5 +123,33 @@
 
     </div>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const selector = document.getElementById("tipo-busqueda");
+        const buscador = document.getElementById("busqueda-especialista");
+
+        function actualizarBuscador() {
+
+            if (selector.value === "hospital") {
+
+                buscador.setAttribute("list", "lista-hospitales");
+                buscador.placeholder = "Ej. Hospital Escuela";
+
+            } else {
+
+                buscador.setAttribute("list", "lista-especialidades");
+                buscador.placeholder = "Ej. Cardiología";
+
+            }
+
+            buscador.value = "";
+        }
+
+        selector.addEventListener("change", actualizarBuscador);
+
+    });
+</script>
 
 {% endblock %}

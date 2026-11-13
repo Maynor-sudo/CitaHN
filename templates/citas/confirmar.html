@@ -70,23 +70,29 @@
                     value="{{ hora }}"
                 >
 
-                <div class="mb-4">
-                    <label
-                        for="motivo"
-                        class="form-label fw-semibold"
-                    >
-                        Motivo de la consulta
-                    </label>
 
-                    <textarea
-                        id="motivo"
-                        name="motivo"
-                        class="form-control"
-                        rows="4"
-                        maxlength="500"
-                        required
-                    ></textarea>
-                </div>
+<div class="mb-4">
+    <label for="motivo" class="form-label fw-semibold">
+        Motivo de la consulta
+        <span class="text-secondary fw-normal">(Opcional)</span>
+    </label>
+
+    <textarea
+        id="motivo"
+        name="motivo"
+        class="form-control"
+        rows="4"
+        maxlength="500"
+        placeholder="Describe brevemente el motivo de tu consulta (opcional)."
+        title="Puedes utilizar letras, números y signos de puntuación."
+    ></textarea>
+
+    <div class="form-text">
+        Este campo no es obligatorio. Puedes dejarlo vacío.
+        Máximo 500 caracteres.
+    </div>
+</div>
+
 
                 <button
                     type="submit"

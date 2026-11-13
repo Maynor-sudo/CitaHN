@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Seguridad
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-solo-para-desarrollo-local")
+BACKUP_ENCRYPTION_KEY = os.getenv("BACKUP_ENCRYPTION_KEY")
 
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     "apps.citas",
     "apps.notificaciones",
     "apps.reportes",
+    "apps.backups",
 ]
 
 # Middleware
@@ -149,8 +151,8 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    CLOUDINARY_STORAGE = {
-        "CLOUD_NAME": os.getenv("syb1p0k3"),
-        "API_KEY": os.getenv("922888661679968"),
-        "API_SECRET": os.getenv("p4FP7_I2V-A7OAN8n3om_N6-QCA"),
-    }
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}

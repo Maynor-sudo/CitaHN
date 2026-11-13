@@ -1,4 +1,3 @@
-
 from django.shortcuts import render, get_object_or_404
 
 from apps.hospitales.models import Departamento, Hospital, Especialidad
@@ -6,18 +5,38 @@ from apps.medicos.models import Medico
 
 
 def seleccionar_departamento(request):
-    departamentos = Departamento.objects.filter(
-        activo=True,
-        hospitales__activo=True,
-    ).distinct().order_by("nombre")
+    departamentos = (
+        Departamento.objects.filter(
+            activo=True,
+            hospitales__activo=True,
+        )
+        .distinct()
+        .order_by("nombre")
+    )
 
-    especialidades_busqueda = Especialidad.objects.filter(
-        activo=True,
-        hospitales__activo=True,
-        hospitales__departamento__activo=True,
-        medicos__activo=True,
-        medicos__usuario__activo=True,
-    ).distinct().order_by("nombre")
+    especialidades_busqueda = (
+        Especialidad.objects.filter(
+            activo=True,
+            hospitales__activo=True,
+            hospitales__departamento__activo=True,
+            medicos__activo=True,
+            medicos__usuario__activo=True,
+        )
+        .distinct()
+        .order_by("nombre")
+    )
+
+    hospitales_busqueda = (
+        Hospital.objects.filter(
+            activo=True,
+            departamento__activo=True,
+            medicos__activo=True,
+            medicos__usuario__activo=True,
+            medicos__especialidad__activo=True,
+        )
+        .distinct()
+        .order_by("nombre")
+    )
 
     return render(
         request,
@@ -25,6 +44,7 @@ def seleccionar_departamento(request):
         {
             "departamentos": departamentos,
             "especialidades_busqueda": especialidades_busqueda,
+            "hospitales_busqueda": hospitales_busqueda,
         },
     )
 

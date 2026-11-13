@@ -21,3 +21,20 @@ media/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Backups y archivos sensibles
+*.dump
+*.dump.enc
+*.backup
+*.bak
+
+# Archivos temporales de Excel
+~$*
+
+# Entornos virtuales adicionales
+.venv/
+env/
+
+# Archivos de configuración local
+.env.*
+!.env.example

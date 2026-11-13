@@ -1,6 +1,10 @@
 from functools import wraps
 from io import BytesIO
 
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+from openpyxl.utils import get_column_letter
+
 import os
 from xml.sax.saxutils import escape
 from django.conf import settings
@@ -135,6 +139,7 @@ def confirmar_cita(request, hospital_id, especialidad_id):
     hora = request.GET.get("hora")
 
     if not fecha or not hora:
+        messages.error(request, "La fecha y hora son obligatorias.")
         return redirect(
             "seleccionar_horario",
             hospital_id=hospital.id,
@@ -194,8 +199,8 @@ def crear_cita_view(request, hospital_id, especialidad_id):
     hora = request.POST.get("hora")
     motivo = request.POST.get("motivo", "").strip()
 
-    if not fecha or not hora or not motivo:
-        messages.error(request, "Todos los campos son obligatorios.")
+    if not fecha or not hora:
+        messages.error(request, "La fecha y hora son obligatorias.")
         return redirect(
             "seleccionar_horario",
             hospital_id=hospital.id,
@@ -845,6 +850,217 @@ def reporte_pdf_medico(request):
         elementos.append(tabla)
 
     documento.build(elementos)
+    return respuesta
+
+
+@medico_requerido
+def reporte_excel_medico(request):
+    desde, hasta = fechas_agenda(request)
+
+    if desde is None:
+        messages.error(
+            request,
+            "Selecciona un rango de fechas válido.",
+        )
+        return redirect("agenda_medico")
+
+    citas = (
+        Cita.objects.filter(
+            medico=request.medico,
+            fecha_hora__date__gte=desde,
+            fecha_hora__date__lte=hasta,
+        )
+        .select_related(
+            "paciente",
+            "hospital",
+            "especialidad",
+        )
+        .order_by("fecha_hora")
+    )
+
+    libro = Workbook()
+    hoja = libro.active
+    hoja.title = "Agenda médica"
+
+    azul = "12345A"
+    turquesa = "00A6A6"
+    gris = "D4DEE5"
+    gris_claro = "F1F5F9"
+    blanco = "FFFFFF"
+
+    # Título
+    hoja.merge_cells("A1:E1")
+    hoja["A1"] = "CitaHN - AGENDA MÉDICA"
+    hoja["A1"].font = Font(
+        name="Arial",
+        size=18,
+        bold=True,
+        color=blanco,
+    )
+    hoja["A1"].fill = PatternFill(
+        "solid",
+        fgColor=azul,
+    )
+    hoja["A1"].alignment = Alignment(
+        horizontal="center",
+        vertical="center",
+    )
+    hoja.row_dimensions[1].height = 32
+
+    # Información del reporte
+    hoja.merge_cells("A3:E3")
+    hoja["A3"] = f"Médico: {request.medico}"
+    hoja["A3"].font = Font(bold=True, size=11)
+
+    hoja.merge_cells("A4:E4")
+    hoja["A4"] = f"Hospital: {request.medico.hospital.nombre}"
+
+    hoja.merge_cells("A5:E5")
+    hoja["A5"] = f"Especialidad: {request.medico.especialidad.nombre}"
+
+    hoja.merge_cells("A6:E6")
+    hoja["A6"] = (
+        f"Período: {desde.strftime('%d/%m/%Y')} " f"al {hasta.strftime('%d/%m/%Y')}"
+    )
+
+    for fila in range(3, 7):
+        hoja.cell(row=fila, column=1).font = Font(
+            name="Arial",
+            size=10,
+            bold=True,
+            color=azul,
+        )
+
+    # Encabezados
+    encabezados = [
+        "Fecha y hora",
+        "Paciente",
+        "Identidad",
+        "Motivo",
+        "Estado",
+    ]
+
+    fila_encabezado = 8
+
+    for columna, encabezado in enumerate(encabezados, start=1):
+        celda = hoja.cell(
+            row=fila_encabezado,
+            column=columna,
+            value=encabezado,
+        )
+
+        celda.font = Font(
+            bold=True,
+            color=blanco,
+            size=10,
+        )
+        celda.fill = PatternFill(
+            "solid",
+            fgColor=azul,
+        )
+        celda.alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+        )
+
+    # Bordes
+    borde = Border(
+        left=Side(style="thin", color=gris),
+        right=Side(style="thin", color=gris),
+        top=Side(style="thin", color=gris),
+        bottom=Side(style="thin", color=gris),
+    )
+
+    # Datos
+    for numero_fila, cita in enumerate(citas, start=9):
+        fecha_local = timezone.localtime(cita.fecha_hora)
+        fecha_excel = fecha_local.replace(tzinfo=None)
+
+        paciente = f"{cita.paciente.nombre} " f"{cita.paciente.apellido}"
+
+        valores = [
+            fecha_excel,
+            paciente,
+            str(cita.paciente.identidad or ""),
+            str(cita.motivo or "No especificado"),
+            cita.get_estado_display(),
+        ]
+
+        for columna, valor in enumerate(valores, start=1):
+            celda = hoja.cell(
+                row=numero_fila,
+                column=columna,
+                value=valor,
+            )
+
+            celda.border = borde
+            celda.alignment = Alignment(
+                vertical="center",
+                wrap_text=True,
+            )
+
+            if numero_fila % 2 == 0:
+                celda.fill = PatternFill(
+                    "solid",
+                    fgColor=gris_claro,
+                )
+
+            if columna == 1:
+                celda.number_format = "dd/mm/yyyy hh:mm"
+
+            if columna == 3:
+                celda.number_format = "@"
+
+    # Bordes en encabezados
+    for celda in hoja[fila_encabezado]:
+        celda.border = borde
+
+    # Ancho de columnas
+    anchos = {
+        "A": 22,
+        "B": 30,
+        "C": 20,
+        "D": 45,
+        "E": 20,
+    }
+
+    for columna, ancho in anchos.items():
+        hoja.column_dimensions[columna].width = ancho
+
+    # Presentación
+    hoja.freeze_panes = "A9"
+    hoja.auto_filter.ref = f"A8:E{max(8, hoja.max_row)}"
+    hoja.sheet_view.showGridLines = True
+
+    # Altura de filas
+    hoja.row_dimensions[8].height = 25
+
+    for fila in range(9, hoja.max_row + 1):
+        hoja.row_dimensions[fila].height = 30
+
+    # Configuración de impresión
+    hoja.sheet_properties.pageSetUpPr.fitToPage = True
+    hoja.page_setup.fitToWidth = 1
+    hoja.page_setup.fitToHeight = 0
+    hoja.page_setup.orientation = "landscape"
+    hoja.page_setup.paperSize = hoja.PAPERSIZE_A4
+
+    # Generar archivo
+    archivo = BytesIO()
+    libro.save(archivo)
+    archivo.seek(0)
+
+    respuesta = HttpResponse(
+        archivo.getvalue(),
+        content_type=(
+            "application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"
+        ),
+    )
+
+    respuesta["Content-Disposition"] = (
+        f'attachment; filename="agenda_medica_{desde}_{hasta}.xlsx"'
+    )
+
     return respuesta
 
 

@@ -1,4 +1,3 @@
-
 {% extends "base/base.html" %}
 
 {% block title %}Buscar especialistas | CitaHN{% endblock %}
@@ -10,89 +9,112 @@
         <div class="text-center mb-4">
             <h1 class="fw-bold">Encuentra tu especialista</h1>
             <p class="text-secondary">
-                Busca por especialidad o nombre del médico.
+                Busca por especialidad o por hospital.
             </p>
         </div>
 
-        <form method="get"
-              action="{% url 'buscar_especialistas' %}"
-              class="mx-auto mb-5"
-              style="max-width: 650px;">
+        <form method="get" action="{% url 'buscar_especialistas' %}" class="mx-auto mb-5" style="max-width: 700px;">
 
-            <label for="busqueda" class="form-label fw-semibold">
-                Filtra especialistas
-            </label>
+            <div class="row g-2 align-items-end">
 
-            <input
-                id="busqueda"
-                type="search"
-                name="q"
-                value="{{ consulta }}"
-                class="form-control form-control-lg"
-                placeholder="Ej. Medicina general"
-                list="lista-especialidades"
-                autocomplete="off"
-            >
+                <div class="col-12 col-md-4">
+                    <label for="tipo" class="form-label fw-semibold">
+                        Buscar por
+                    </label>
 
-            <datalist id="lista-especialidades">
-                {% for especialidad in especialidades %}
-                    <option value="{{ especialidad.nombre }}">
-                {% endfor %}
-            </datalist>
+                    <select name="tipo" id="tipo" class="form-select form-select-lg">
 
-            <button class="btn btn-primary mt-3 w-100" type="submit">
-                Buscar
-            </button>
+                        <option value="especialidad" {% if tipo == "especialidad" %}selected{% endif %}>
+                            Especialidad
+                        </option>
+
+                        <option value="hospital" {% if tipo == "hospital" %}selected{% endif %}>
+                            Hospital
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-8">
+                    <label for="busqueda" class="form-label fw-semibold">
+                        ¿Qué deseas buscar?
+                    </label>
+
+                    <input type="search" name="q" id="busqueda" value="{{ consulta }}"
+                        class="form-control form-control-lg" placeholder="Escribe una especialidad..."
+                        list="opciones-busqueda" autocomplete="off" required>
+
+                    <datalist id="opciones-busqueda">
+                        {% for especialidad in especialidades %}
+                        <option value="{{ especialidad.nombre }}"></option>
+                        {% endfor %}
+
+                        {% for hospital in hospitales %}
+                        <option value="{{ hospital.nombre }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        Buscar
+                    </button>
+
+                    <a href="{% url 'seleccionar_departamento' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        Limpiar búsqueda
+                    </a>
+                </div>
+
+            </div>
         </form>
 
-        {% if consulta %}
-            {% if resultados %}
-                <h2 class="h4 mb-4">
-                    Resultados para "{{ consulta }}"
-                </h2>
+        {% if busqueda_realizada %}
 
-                <div class="row g-4">
-                    {% for medico in resultados %}
-                        <div class="col-12 col-md-6">
-                            <div class="card h-100 shadow-sm rounded-4">
-                                <div class="card-body p-4">
-                                    <h3 class="h5 fw-bold">
-                                        Dr. {{ medico.usuario.nombre }}
-                                        {{ medico.usuario.apellido }}
-                                    </h3>
+        {% if resultados %}
+        <h2 class="h4 mb-4">Resultados de búsqueda</h2>
 
-                                    <p class="text-primary mb-2">
-                                        {{ medico.especialidad.nombre }}
-                                    </p>
+        <div class="row g-4">
+            {% for medico in resultados %}
+            <div class="col-12 col-md-6">
+                <div class="card h-100 shadow-sm rounded-4">
+                    <div class="card-body p-4">
 
-                                    <p class="mb-1">
-                                        <strong>Hospital:</strong>
-                                        {{ medico.hospital.nombre }}
-                                    </p>
+                        <h3 class="h5 fw-bold">
+                            Atención médica disponible
+                        </h3>
 
-                                    <p class="text-secondary mb-3">
-                                        <strong>Departamento:</strong>
-                                        {{ medico.hospital.departamento.nombre }}
-                                    </p>
+                        <p class="text-primary mb-2">
+                            {{ medico.especialidad.nombre }}
+                        </p>
 
-                                    <a
-                                        href="{% url 'seleccionar_horario' medico.hospital.id medico.especialidad.id %}"
-                                        class="btn btn-primary"
-                                    >
-                                        Ver horarios
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
+                        <p class="mb-1">
+                            <strong>Hospital:</strong>
+                            {{ medico.hospital.nombre }}
+                        </p>
+
+                        <p class="text-secondary mb-3">
+                            <strong>Departamento:</strong>
+                            {{ medico.hospital.departamento.nombre }}
+                        </p>
+
+                        <a href="{% url 'seleccionar_horario' medico.hospital.id medico.especialidad.id %}"
+                            class="btn btn-primary">
+                            Ver horarios
+                        </a>
+
+                    </div>
                 </div>
+            </div>
+            {% endfor %}
+        </div>
 
-            {% else %}
-                <div class="alert alert-info text-center">
-                    No encontramos especialistas que coincidan con
-                    "{{ consulta }}". Prueba con otra especialidad o nombre.
-                </div>
-            {% endif %}
+        {% else %}
+        <div class="alert alert-info text-center">
+            No encontramos resultados para "{{ consulta }}".
+            Intenta con otra búsqueda.
+        </div>
+        {% endif %}
+
         {% endif %}
 
     </div>

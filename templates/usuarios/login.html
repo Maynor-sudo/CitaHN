@@ -6,113 +6,114 @@
 
 <section class="py-5">
     <div class="container">
-
         <div class="row justify-content-center">
-
             <div class="col-12 col-md-6 col-lg-5">
 
                 <div class="card shadow-sm rounded-4 p-4">
 
                     <div class="text-center mb-4">
-                        <h1 class="fw-bold">
-                            Iniciar sesión
-                        </h1>
-
+                        <h1 class="fw-bold">Iniciar sesión</h1>
                         <p class="text-secondary mb-0">
                             Ingresa a tu cuenta de CitaHN.
                         </p>
                     </div>
 
-                    <form method="post" class="login-form">
+                    <p class="small text-secondary">
+                        Los campos marcados con
+                        <span class="text-danger fw-bold">*</span>
+                        son obligatorios.
+                    </p>
 
+                    <form method="post" class="login-form">
                         {% csrf_token %}
 
                         {% if form.errors %}
-                            <div class="alert alert-danger rounded-3">
-                                El número de identidad o la contraseña
-                                son incorrectos.
-                            </div>
+                        <div class="alert alert-danger rounded-3">
+                            El número de identidad o la contraseña
+                            son incorrectos.
+                        </div>
                         {% endif %}
 
                         <div class="mb-3">
-
-                            <label
-                                for="id_username"
-                                class="form-label fw-semibold"
-                            >
+                            <label for="id_username" class="form-label fw-semibold">
                                 Número de identidad
+                                <span class="text-danger">*</span>
                             </label>
 
-                            <input
-                                type="text"
-                                name="username"
-                                id="id_username"
-                                class="form-control"
-                                placeholder="Ingresa tu número de identidad"
-                                autocomplete="username"
-                                required
-                            >
-
+                            <input type="text" name="username" id="id_username" class="form-control"
+                                placeholder="Ingresa tu número de identidad" inputmode="numeric"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                title="Ingresa únicamente números." autocomplete="username" required>
                         </div>
 
                         <div class="mb-4">
-
-                            <label
-                                for="id_password"
-                                class="form-label fw-semibold"
-                            >
+                            <label for="id_password" class="form-label fw-semibold">
                                 Contraseña
+                                <span class="text-danger">*</span>
                             </label>
 
-                            <input
-                                type="password"
-                                name="password"
-                                id="id_password"
-                                class="form-control"
-                                placeholder="Ingresa tu contraseña"
-                                autocomplete="current-password"
-                                required
-                            >
+                            <div class="input-group">
+                                <input type="password" name="password" id="id_password" class="form-control"
+                                    placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
 
+                                <button type="button" class="btn btn-outline-secondary toggle-password"
+                                    data-target="id_password" aria-label="Mostrar u ocultar contraseña">
+
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <input
-                            type="hidden"
-                            name="next"
-                            value="{{ next }}"
-                        >
+                        <input type="hidden" name="next" value="{{ next }}">
 
-                        <button
-                            type="submit"
-                            class="btn btn-primary btn-lg w-100"
-                        >
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
                             Iniciar sesión
                         </button>
-
                     </form>
 
                     <div class="text-center mt-4">
-
                         <span class="text-secondary">
                             ¿No tienes una cuenta?
                         </span>
 
-                        <a
-                            href="{% url 'registro' %}"
-                            class="text-primary fw-semibold text-decoration-none"
-                        >
+                        <a href="{% url 'registro' %}" class="text-primary fw-semibold text-decoration-none">
                             Crear cuenta
                         </a>
-
                     </div>
 
                 </div>
-
             </div>
-
         </div>
-
     </div>
 </section>
+
+<script>
+    document.querySelectorAll(".toggle-password").forEach(button => {
+        button.addEventListener("click", function () {
+            const input = document.getElementById(this.dataset.target);
+            const svg = this.querySelector("svg");
+
+            if (input.type === "password") {
+                input.type = "text";
+                svg.innerHTML = `
+                <path d="M3 3l18 18"/>
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                <path d="M9.9 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a13 13 0 0 1-3 3.8"/>
+                <path d="M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.5 0 2.8-.3 4-.9"/>
+            `;
+            } else {
+                input.type = "password";
+                svg.innerHTML = `
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="3"/>
+            `;
+            }
+        });
+    });
+</script>
 
 {% endblock %}
